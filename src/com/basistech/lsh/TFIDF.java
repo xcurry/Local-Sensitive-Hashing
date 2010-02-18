@@ -23,7 +23,7 @@ public class TFIDF {
 		public int total;		
 	}
 	
-	public TFPair computeTermFrequency(String f)  throws IOException {
+	public TFPair computeTermFrequency(String f) throws IOException {
 		BufferedReader in = new BufferedReader(new FileReader(f));
 		String line = null;
 		HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
@@ -70,6 +70,11 @@ public class TFIDF {
 			}
 			tfidf.put(f, fv);
 		}
+		df = null;
+	}
+
+	public int getNDocs() {
+		return nDocs;
 	}
 
 	public HashMap<String, FeatureVector> getTfidf() {

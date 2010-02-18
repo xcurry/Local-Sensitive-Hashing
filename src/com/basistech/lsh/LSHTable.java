@@ -13,7 +13,7 @@ public class LSHTable {
 			return signature.compareTo(other.signature);
 		}
 	}
-	
+		
 	private int dimension;
 	private List<Projection> projections;
 	private Permutation permutation;
@@ -21,7 +21,7 @@ public class LSHTable {
 	private int maxDistance;
 	private int beam;
 
-	public LSHTable(int nFeatures, int dimension, long permutationSeed, List<Projection> projections) {
+	public LSHTable(int dimension, List<Projection> projections, long permutationSeed) {
 		this.dimension = dimension;
 		this.projections = projections;
 		permutation = new Permutation(dimension, permutationSeed);
@@ -57,7 +57,6 @@ public class LSHTable {
 	public void setBeam(int beam) {
 		this.beam = beam;
 	}
-	
 	
 	public void search(HashMap<Object, Integer> results, FeatureVector featVec) {
 		//TODO: better result set -- quit searching if exceed max dist in results so far
