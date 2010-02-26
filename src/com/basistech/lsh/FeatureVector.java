@@ -8,101 +8,101 @@ import java.util.Map.Entry;
 
 //mimic typedef
 public class FeatureVector {
-	private HashMap<Integer, Double> rep;
-	
-	public FeatureVector() {
-		rep = new HashMap<Integer, Double>();
-	}
+    private HashMap<Integer, Double> rep;
 
-	public void read(String rawRep) {
-		String[] toks = rawRep.split(" ");
-		
-		Integer key = null;
-		Double value = null;
-		int i = 0;
-		for (String tok : toks) {
-			if (tok == null) {
-				break;
-			}
-			if (i % 2 == 1) {
-				value = Double.parseDouble(tok);
-				rep.put(key, value);
-			} else {
-				key = Integer.parseInt(tok);
-			}
-			++i;
-		}
-	}
-	
-	public String write() {
-		String rawRep = new String();
-		for (Entry<Integer, Double> entry : entrySet()) {
-			rawRep += entry.getKey() + " " + entry.getValue() + " ";			
-		}		
-		return rawRep;
-	}
-	
-	public void clear() {
-		rep.clear();
-	}
+    public FeatureVector() {
+        rep = new HashMap<Integer, Double>();
+    }
 
-	public Object clone() {
-		return rep.clone();
-	}
+    public void read(String rawRep) {
+        String[] toks = rawRep.split(" ");
 
-	public boolean containsKey(Object key) {
-		return rep.containsKey(key);
-	}
+        Integer key = null;
+        Double value = null;
+        int i = 0;
+        for (String tok : toks) {
+            if (tok == null) {
+                break;
+            }
+            if (i % 2 == 1) {
+                value = Double.parseDouble(tok);
+                rep.put(key, value);
+            } else {
+                key = Integer.parseInt(tok);
+            }
+            ++i;
+        }
+    }
 
-	public boolean containsValue(Object value) {
-		return rep.containsValue(value);
-	}
+    public String write() {
+        String rawRep = new String();
+        for (Entry<Integer, Double> entry : entrySet()) {
+            rawRep += entry.getKey() + " " + entry.getValue() + " ";			
+        }		
+        return rawRep;
+    }
 
-	public Set<Entry<Integer, Double>> entrySet() {
-		return rep.entrySet();
-	}
+    public void clear() {
+        rep.clear();
+    }
 
-	public boolean equals(Object o) {
-		return rep.equals(o);
-	}
+    public Object clone() {
+        return rep.clone();
+    }
 
-	public Double get(Object key) {
-		return rep.get(key);
-	}
+    public boolean containsKey(Object key) {
+        return rep.containsKey(key);
+    }
 
-	public int hashCode() {
-		return rep.hashCode();
-	}
+    public boolean containsValue(Object value) {
+        return rep.containsValue(value);
+    }
 
-	public boolean isEmpty() {
-		return rep.isEmpty();
-	}
+    public Set<Entry<Integer, Double>> entrySet() {
+        return rep.entrySet();
+    }
 
-	public Set<Integer> keySet() {
-		return rep.keySet();
-	}
+    public boolean equals(Object o) {
+        return rep.equals(o);
+    }
 
-	public Double put(Integer key, Double value) {
-		return rep.put(key, value);
-	}
+    public Double get(Object key) {
+        return rep.get(key);
+    }
 
-	public void putAll(Map<? extends Integer, ? extends Double> m) {
-		rep.putAll(m);
-	}
+    public int hashCode() {
+        return rep.hashCode();
+    }
 
-	public Double remove(Object key) {
-		return rep.remove(key);
-	}
+    public boolean isEmpty() {
+        return rep.isEmpty();
+    }
 
-	public int size() {
-		return rep.size();
-	}
+    public Set<Integer> keySet() {
+        return rep.keySet();
+    }
 
-	public String toString() {
-		return rep.toString();
-	}
+    public Double put(Integer key, Double value) {
+        return rep.put(key, value);
+    }
 
-	public Collection<Double> values() {
-		return rep.values();
-	}	
+    public void putAll(Map<? extends Integer, ? extends Double> m) {
+        rep.putAll(m);
+    }
+
+    public Double remove(Object key) {
+        return rep.remove(key);
+    }
+
+    public int size() {
+        return rep.size();
+    }
+
+    public String toString() {
+        return rep.toString();
+    }
+
+    public Collection<Double> values() {
+        return rep.values();
+    }	
 }
