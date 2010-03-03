@@ -30,8 +30,7 @@ public class LSH {
     }
 
     public void initializeProjections() {
-        Sampler sampler = new FlipSampler();
-        sampler.setSeed(projectionSeed);
+        Sampler sampler = new FlipSampler(projectionSeed);
         this.projections = new ArrayList<Projection>();
         for (int i = 0; i < dimension; ++i) {
             projections.add(new Projection(nFeatures, sampler));

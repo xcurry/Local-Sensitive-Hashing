@@ -2,11 +2,6 @@ package com.basistech.lsh;
 
 import java.util.Random;
 
-public abstract class Sampler {
-    protected Random rng = new Random(); 
-
-    public void setSeed(long seed) {        
-        rng.setSeed(seed);
-    }
+public interface Sampler {
     public abstract int draw();
 }

@@ -78,12 +78,10 @@ public class Test {
     public static void testProjection() {
         long seed = 9l;
         int nFeats = 10;
-        Sampler fs = new FlipSampler();
-        fs.setSeed(seed);
+        Sampler fs = new FlipSampler(seed);
         Projection pf = new Projection(nFeats, fs);
         assert(pf.toString().equals("1,-1,1,1,1,1,1,1,1,-1,"));
-        Sampler as = new AchSampler();
-        as.setSeed(seed);
+        Sampler as = new AchSampler(seed);
         Projection pa = new Projection(nFeats, as);
         assert(pa.toString().equals("1,0,0,1,0,0,0,-1,1,1,"));
         System.out.println("Projection");        
