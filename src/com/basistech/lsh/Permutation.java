@@ -12,13 +12,13 @@ public class Permutation {
     public Permutation(int size, long seed) {
         this.size = size;
         values = new ArrayList<Integer>(size);
-        rng.setSeed(seed);
-
+        rng = new Random(seed);
         for (int i = 0; i < size; ++i) {	
-            values.set(i, i);
+            values.add(i);
         }
         Collections.shuffle(values, rng);
     }
+//    // Fisher-Yates    
 //    int i = 0;
 //    for (i = 0; i < size; ++i) {
 //        values[i] = i;

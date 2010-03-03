@@ -63,14 +63,30 @@ public class Test {
         System.out.println("TFIDF");
     }
 
-    public static void testPermuation() {
-                
-        
+    public static void testPermutation() {
+        long seed = 9l; 
+        int nFeats = 50;
+        Permutation p = new Permutation(nFeats, seed);
+        String first10 = new String();
+        for (int i = 0; i < 10; ++i) {
+            first10 += p.at(i) + " ";
+        }
+        assert(first10.equals("15 0 20 14 29 16 45 44 30 22 "));
+        System.out.println("Permutation");
     }
     
     public static void testProjection() {
-        
-        
+        long seed = 9l;
+        int nFeats = 10;
+        Sampler fs = new FlipSampler();
+        fs.setSeed(seed);
+        Projection pf = new Projection(nFeats, fs);
+        assert(pf.toString().equals("1,-1,1,1,1,1,1,1,1,-1,"));
+        Sampler as = new AchSampler();
+        as.setSeed(seed);
+        Projection pa = new Projection(nFeats, as);
+        assert(pa.toString().equals("1,0,0,1,0,0,0,-1,1,1,"));
+        System.out.println("Projection");        
     }
         
     public static void testResultSet() {
@@ -93,5 +109,7 @@ public class Test {
         testTFIDF();
         testBitVector();
         testLogN();
+        testPermutation();
+        testProjection();
     }
 }
