@@ -8,9 +8,12 @@ public class Vocabulary {
     private int id = 0;
     public static int UNDEF = -1;
 
-    public Vocabulary() {}
+    public Vocabulary() {
+        table = new HashMap<String, Integer>();        
+    }
 
     public Vocabulary(Set<String> words) {
+        this();
         for (String w : words) {
             put(w);
         }		
@@ -36,5 +39,9 @@ public class Vocabulary {
 
     public int size() {
         return id;		
+    }
+    
+    public String toString() {
+        return table.toString();        
     }
 }

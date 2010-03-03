@@ -18,9 +18,7 @@ public class BitVector {
     public int hammingDist(BitVector other) {
         BitSet xored = (BitSet) bits.clone();
         xored.xor(other.bits);
-        int bitsSet = xored.cardinality();
-        xored = null;
-        return bitsSet;
+        return xored.cardinality();
     }
 
     public int length() {

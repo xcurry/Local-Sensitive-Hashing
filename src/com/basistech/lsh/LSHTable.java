@@ -59,7 +59,9 @@ public class LSHTable {
     }
 
     public void search(HashMap<Object, Integer> results, FeatureVector featVec) {
-        //TODO: better result set -- quit searching if exceed max dist in results so far
+        //TODO better search. options:  
+        // 1: easier, quit searching if exceed max in ResultSet so far
+        // 2: harder, pass ResultSet and work with it
 
         Storage item = new Storage();
         item.signature = computeSignature(featVec);

@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.Map.Entry;
 
-//mimic typedef
 public class FeatureVector {
     private HashMap<Integer, Double> rep;
 
@@ -41,7 +40,8 @@ public class FeatureVector {
         }		
         return rawRep;
     }
-
+    
+    //auto-generated to mimic typedef
     public void clear() {
         rep.clear();
     }

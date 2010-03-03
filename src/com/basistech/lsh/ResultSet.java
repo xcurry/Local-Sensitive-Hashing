@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Map.Entry;
 
-//TODO: rename to sthg like MappedPriorityQueue...
+//TODO: rename to sthg like MappedPriorityQueue
 public class ResultSet {
     private static class ScoreCompareDesc implements Comparator<ResultPair> {
         public int compare(ResultPair p1, ResultPair p2) {
