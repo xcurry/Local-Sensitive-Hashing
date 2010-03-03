@@ -40,7 +40,7 @@ public class Vocabulary {
     public int size() {
         return id;		
     }
-    
+
     public String toString() {
         return table.toString();        
     }

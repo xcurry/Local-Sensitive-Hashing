@@ -8,7 +8,8 @@ public class LogN {
     static {
         table = new double[size];
         LOG2 = Math.log(2.0);
-        for (int i = 0; i < size; ++i) {
+        table[0] = Double.MIN_VALUE;
+        for (int i = 1; i < size; ++i) {
             table[i] = log2(i);
         }	
     }

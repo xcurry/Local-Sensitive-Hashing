@@ -19,22 +19,22 @@ public class Permutation {
         }
         Collections.shuffle(values, rng);
     }
-//        int i = 0;
-//        for (i = 0; i < size; ++i) {
-//            values[i] = i;
-//            i = size;
-//            while (i > 1) {
-//                int swapIndex = rng.nextInt(i);
-//                int tmp = values[swapIndex];
-//                --i;
-//                values[swapIndex] = values[i];
-//                values[i] = tmp;			
-//            }		
-//        }
+//    int i = 0;
+//    for (i = 0; i < size; ++i) {
+//        values[i] = i;
+//        i = size;
+//        while (i > 1) {
+//            int swapIndex = rng.nextInt(i);
+//            int tmp = values[swapIndex];
+//            --i;
+//            values[swapIndex] = values[i];
+//            values[i] = tmp;			
+//        }		
+//    }
 
-        public int at(int i) {
-            assert(i < size);
-            //return values[i];
-            return values.get(i);
-        }
+    public int at(int i) {
+        assert(i < size);
+        //return values[i];
+        return values.get(i);
     }
+}

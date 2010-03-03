@@ -79,7 +79,7 @@ public class TFIDF {
         }
         return fv;        
     }
-    
+
     public void computeTFIDF(File[] files) throws IOException {
         for (File f : files) {
             tfidf.put(f.getName(), computeFeatures(f));

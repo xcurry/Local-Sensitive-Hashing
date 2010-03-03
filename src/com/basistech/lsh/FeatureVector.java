@@ -40,7 +40,7 @@ public class FeatureVector {
         }		
         return rawRep;
     }
-    
+
     //auto-generated to mimic typedef
     public void clear() {
         rep.clear();
