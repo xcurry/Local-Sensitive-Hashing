@@ -1,15 +1,17 @@
 package com.basistech.lsh;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class Test {    
-
+    
     private static void testBitVector() {
         BitVector v1 = new BitVector(2);
         BitVector v2 = new BitVector(2);
@@ -43,7 +45,7 @@ public class Test {
 
     private static void testTFIDF() throws IOException {
         File docDir = new File(dirName + "/TFIDF");
-        File[] docs = docDir.listFiles();
+        File[] docs = docDir.listFiles(new SvnFilter());
 
         TFIDF tfidf = new TFIDF();
         tfidf.computeDocumentFrequency(docs);
@@ -88,15 +90,54 @@ public class Test {
     }
         
     public static void testResultSet() {
+        int capacity = 2;
+        ResultSet rs = new ResultSet(capacity);
         
+        String o1 = "key1";
+        String o2 = "key2";
+        String o3 = "key3";
         
+        rs.add(o1, 5);
+        rs.add(o2, 5);
+        rs.add(o1, 3);
+        rs.add(o2, 4);
+        rs.add(o3, 1);
+        rs.add(o3, 7);
+        rs.add(o1, 9);
+        rs.add(o2, 3);
+        rs.add(o2, 1);
+        
+        System.out.println(rs.toString());
+        
+        System.out.println("ResultSet");        
     }
     
-    private static String usage;
-    private static String dirName;
-    static {
-        usage = "test-dir";        
+    
+    public static void testCosineDistance() {
+        Map<String, Double> fv1 = new HashMap<String, Double>();
+        Map<String, Double> fv2 = new HashMap<String, Double>();
+        
+        fv1.put("hi", 0.5);
+        fv1.put("bye", 0.5);
+        fv2.put("hi", 1.0);
+        fv2.put("bye", 0.45);
+        assert(Math.abs(CosineDistance.value(fv1, fv2) - 0.934d) < 0.001);    
+        fv2.put("hi", 0.55);        
+        assert(Math.abs(CosineDistance.value(fv1, fv2) - 0.995d) < 0.001);
+        fv2.put("thing",50.0);
+        assert(Math.abs(CosineDistance.value(fv1, fv2) - 0.014d) < 0.001);
     }
+    
+    private static class SvnFilter implements FilenameFilter {
+        public boolean accept(File dir, String name) {
+            if (name.contains(".svn")) {
+                return false;
+            }
+            return true;
+        }
+    }
+    private static String usage = "test-dir";
+    private static String dirName;
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
@@ -109,5 +150,7 @@ public class Test {
         testLogN();
         testPermutation();
         testProjection();
+        testResultSet();
+        testCosineDistance();
     }
 }

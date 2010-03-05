@@ -7,4 +7,8 @@ public class ResultPair {
     }
     public Object result;
     public int score;
+    
+    public String toString() {
+        return "(" + result.toString() + "," + score + ")";        
+    }
 }

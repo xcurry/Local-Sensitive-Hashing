@@ -36,10 +36,14 @@ public class ResultSet {
     }
 
     public void add(Object result, int score) {
+        ResultPair top = scoreCache.peek();
+        if (top != null && score > top.score && scoreValues.size() >= capacity) {
+            return;
+        }
         Integer value = scoreValues.get(result);
-        while (value == null || score < value) {
+        if (value == null || score < value) {
             push(result, score);
-            while (scoreCache.size() > capacity) {
+            while (scoreValues.size() > capacity) {
                 pop();
             }
         }
@@ -54,15 +58,14 @@ public class ResultSet {
     private void push(Object result, int score) {
         scoreValues.put(result, score);
         scoreCache.add(new ResultPair(result, score));
+        updateCache();
     }
 
     private void updateCache() {
         ResultPair top = scoreCache.peek();
-        Integer value = scoreValues.get(top.result); 
-        while (value != top.score) { 
+        Integer value = scoreValues.get(top.result);
+        while (value != null && value != top.score) { 
             scoreCache.poll();
-            top.score = value; 
-            scoreCache.add(top);
             top = scoreCache.peek();
             value = scoreValues.get(top.result); 
         }				
@@ -74,8 +77,20 @@ public class ResultSet {
         }
     }
 
+    public void merge(Map<Object, Integer> m) {
+        for (Entry<Object, Integer> entry : m.entrySet()){
+            add(entry.getKey(), entry.getValue());                      
+        }
+    }
+
+    
     public void clear() {
         scoreValues.clear();
         scoreCache.clear();
     }	
+    
+    public String toString() {
+        return "cache: " + scoreCache.toString() + "\n"
+            + "values: " + scoreValues.toString();        
+    }
 }
