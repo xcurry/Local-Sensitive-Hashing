@@ -49,7 +49,7 @@ public class ResultSet {
         }
     }
 
-    private void pop() {
+    public void pop() {
         ResultPair top = scoreCache.poll();
         scoreValues.remove(top.result);
         updateCache();
@@ -83,6 +83,9 @@ public class ResultSet {
         }
     }
 
+    public ResultPair top() {
+        return scoreCache.peek();
+    }
     
     public void clear() {
         scoreValues.clear();

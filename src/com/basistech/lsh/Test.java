@@ -104,16 +104,21 @@ public class Test {
         rs.add(o3, 1);
         rs.add(o3, 7);
         rs.add(o1, 9);
+        String r = rs.top().toString();
+        assert(r.equals("(key1,3)"));        
         rs.add(o2, 3);
         rs.add(o2, 1);
-        
-        System.out.println(rs.toString());
-        
+        rs.add(o1, 1);
+        r = rs.top().toString();
+        assert(r.equals("(key1,1)") || r.equals("(key3,1)"));
+        rs.pop();
+        r = rs.top().toString();
+        assert(r.equals("(key1,1)") || r.equals("(key3,1)"));
         System.out.println("ResultSet");        
     }
     
     
-    public static void testCosineDistance() {
+    public static void testCosineSimilarity() {
         Map<String, Double> fv1 = new HashMap<String, Double>();
         Map<String, Double> fv2 = new HashMap<String, Double>();
         
@@ -121,11 +126,12 @@ public class Test {
         fv1.put("bye", 0.5);
         fv2.put("hi", 1.0);
         fv2.put("bye", 0.45);
-        assert(Math.abs(CosineDistance.value(fv1, fv2) - 0.934d) < 0.001);    
+        assert(Math.abs(CosineSimilarity.value(fv1, fv2) - 0.934d) < 0.001);    
         fv2.put("hi", 0.55);        
-        assert(Math.abs(CosineDistance.value(fv1, fv2) - 0.995d) < 0.001);
+        assert(Math.abs(CosineSimilarity.value(fv1, fv2) - 0.995d) < 0.001);
         fv2.put("thing",50.0);
-        assert(Math.abs(CosineDistance.value(fv1, fv2) - 0.014d) < 0.001);
+        assert(Math.abs(CosineSimilarity.value(fv1, fv2) - 0.014d) < 0.001);
+        System.out.println("CosineDistance");        
     }
     
     private static class SvnFilter implements FilenameFilter {
@@ -151,6 +157,6 @@ public class Test {
         testPermutation();
         testProjection();
         testResultSet();
-        testCosineDistance();
+        testCosineSimilarity();
     }
 }
