@@ -2,20 +2,16 @@ package com.basistech.lsh;
 
 import java.util.Random;
 
-public class FlipSampler implements Sampler {
+public class GaussianSampler implements Sampler {
     private Random rng = new Random(); 
 
-    public FlipSampler(long seed) {        
+    public GaussianSampler(long seed) {        
         rng = new Random(seed);
     }
     
     // sample {-1, 1} ~ {1/2, 1/2}
     public double draw() {
-        int r = rng.nextInt(2);
-        if (r == 0) {
-            return -1;
-        }
-        return 1;
+        return rng.nextGaussian();
     }
     
     public Random getRandom(){

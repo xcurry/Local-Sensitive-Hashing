@@ -10,7 +10,7 @@ public class AchSampler implements Sampler {
     }
 
     // sample {-1, 0, 1} ~ {1/6, 2/3, 1/6}
-    public int draw() {
+    public double draw() {
         int r = rng.nextInt(6);
         if (r == 0) {
             return -1;
@@ -19,5 +19,9 @@ public class AchSampler implements Sampler {
         } else {
             return 0;
         }
+    }
+    
+    public Random getRandom(){
+        return rng;
     }
 }

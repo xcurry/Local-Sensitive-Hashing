@@ -1,5 +1,8 @@
 package com.basistech.lsh;
 
+import java.util.Random;
+
 public interface Sampler {
-    public abstract int draw();
+    public abstract double draw();
+    public Random getRandom();
 }

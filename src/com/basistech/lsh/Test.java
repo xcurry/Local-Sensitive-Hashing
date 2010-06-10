@@ -47,7 +47,7 @@ public class Test {
         File[] docs = docDir.listFiles(new SvnFilter());
 
         TFIDF tfidf = new TFIDF();
-        tfidf.computeDocumentFrequency(docs);
+        //tfidf.computeDocumentFrequency(docs);
         tfidf.computeTFIDF(docs);
 
         HashMap<String, FeatureVector> featVecs = tfidf.getTfidf();
@@ -90,7 +90,7 @@ public class Test {
         
     public static void testResultSet() {
         int capacity = 2;
-        ResultSet rs = new ResultSet(capacity);
+        MappedPriorityQueue rs = new MappedPriorityQueue(capacity);
         
         String o1 = "key1";
         String o2 = "key2";

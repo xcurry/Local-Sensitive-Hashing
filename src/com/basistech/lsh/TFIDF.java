@@ -4,19 +4,23 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+//most of this class is probably broken--computeFeatures 
+//and computeTermFrequency work, though
 //TODO: make feature extractor interface
 //TODO: add lexer interface & whitespace lexer
 public class TFIDF {
-    private HashMap<String, Integer> df;
+    private HashMap<Integer, Integer> df;
     private Vocabulary vocab;	
     private HashMap<String, FeatureVector> tfidf;
     private int nDocs;
+    private int totalWordCount;
 
     public TFIDF() {
-        df = new HashMap<String, Integer>();
+        df = new HashMap<Integer, Integer>();
         vocab = new Vocabulary();
         tfidf = new HashMap<String, FeatureVector>();
     }
@@ -26,14 +30,14 @@ public class TFIDF {
         public int total;		
     }
 
-    public TFPair computeTermFrequency(File f) throws IOException {
+    public TFPair computeTermFrequency(Reader f) throws IOException {
         //TODO: add lexer interface & whitespace lexer
-        BufferedReader in = new BufferedReader(new FileReader(f));
+        BufferedReader in = new BufferedReader(f);
         String line = null;
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
         while ((line = in.readLine()) != null) {
-            String[] toks = line.split("\\s+");
+            String[] toks = line.toLowerCase().split("\\W+");
             for (String tok : toks) {
                 Integer count = tf.get(tok);
                 if (count == null) {
@@ -49,40 +53,71 @@ public class TFIDF {
         return tfp;
     }
 
-    public void computeDocumentFrequency(File[] files) throws IOException {
-        for (File f : files) {
-            TFPair tfp = computeTermFrequency(f);
-            for (String term : tfp.tf.keySet()) {
-                Integer count = df.get(term);
-                if (count == null) {
-                    count = 0;
-                }
-                df.put(term, count + 1);
-                vocab.put(term);
-            }			
-        }
-        nDocs = files.length;
-    }
+    //public void computeDocumentFrequency(File[] files) throws IOException {
+    //    for (File f : files) {
+    //        TFPair tfp = computeTermFrequency(new FileReader(f));
+    //        for (String term : tfp.tf.keySet()) {
+    //            int termId = vocab.put(term);
+    //            Integer count = df.get(termId);
+    //            if (count == null) {
+    //                count = 0;
+    //            }
+    //            df.put(termId, count + 1);
+    //        }			
+    //    }
+    //    nDocs = files.length;
+    //}
 
-    public FeatureVector computeFeatures(File f) throws IOException {
+    public FeatureVector computeFeatures(Reader f, boolean useIDF) throws IOException {
         TFPair tfp = computeTermFrequency(f);
         int tfTotal = tfp.total;
         FeatureVector fv = new FeatureVector();
+        int wordCount=0;
+        if(useIDF){
+            for (Entry<String, Integer> entry : tfp.tf.entrySet()) {
+                String tok = entry.getKey();
+                int termCount = entry.getValue();
+                int termId = vocab.put(tok);
+                Integer count = df.get(termId);
+                if (count == null) {
+                    count = 0;
+                }
+                df.put(termId, count + 1);
+                wordCount+=termCount;
+            }
+        }
+        totalWordCount+=tfp.total;
+        nDocs=nDocs+1;
         for (Entry<String, Integer> entry : tfp.tf.entrySet()) {
             String tok = entry.getKey();
-            int docCount = df.get(tok);
-            double idf = LogN.value(nDocs) - LogN.value(docCount);
             int termCount = entry.getValue();
-            double tf = termCount / (double)tfTotal;
-            int termId = vocab.get(tok);
-            fv.put(termId, tf*idf);                               
+            double tf = termCount / (double)tfTotal;/// (termCount+.5+1.5*tfp.total*nDocs/totalWordCount);
+            int termId = vocab.put(tok);
+            if(useIDF){
+                int docCount = df.get(termId);
+                double idf = LogN.value(nDocs) - LogN.value(docCount);//Math.log(totalWordCount/(double) docCount)/Math.log(totalWordCount+1);
+                fv.put(termId, tf*idf);
+            }else{
+            	fv.put(termId, tf);
+            }
         }
-        return fv;        
+        return fv;
     }
+    
+    /*      double tf = termCount / (double)tfTotal;
+            int termId = vocab.get(tok);
+            if(useIDF){
+                int docCount = df.get(termId);
+                double idf = LogN.value(nDocs) - LogN.value(docCount);
+                fv.put(termId, tf*idf);
+            }else{
+                fv.put(termId, tf);
+            }
+     */
 
     public void computeTFIDF(File[] files) throws IOException {
         for (File f : files) {
-            tfidf.put(f.getName(), computeFeatures(f));
+            tfidf.put(f.getName(), computeFeatures(new FileReader(f), true));
         }
         df = null;
     }

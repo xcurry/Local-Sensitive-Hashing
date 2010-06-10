@@ -4,9 +4,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
-public class FeatureVector {
+public class FeatureVector implements Map<Integer, Double>{
     private HashMap<Integer, Double> rep;
 
     public FeatureVector() {

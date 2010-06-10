@@ -2,12 +2,12 @@ package com.basistech.lsh;
 
 public class Projection {
     private int size;
-    private int[] rep;
+    private double[] rep;
 
     public Projection(int size, Sampler sampler) {
         assert(size > 0);
         this.size = size;
-        rep = new int[size];
+        rep = new double[size];
         for (int i = 0; i < size; ++i) {
             rep[i] = sampler.draw();
         }

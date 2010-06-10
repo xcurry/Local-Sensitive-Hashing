@@ -43,12 +43,12 @@ public class LSH {
         }		
     }
 
-    public ResultSet search(FeatureVector featVec, int nResults) {
-        ResultSet results = new ResultSet(nResults);
+    public MappedPriorityQueue search(FeatureVector featVec, int nResults) {
+        MappedPriorityQueue results = new MappedPriorityQueue(nResults);
         return search(featVec, nResults, results);
     }
 
-    public ResultSet search(FeatureVector featVec, int nResults, ResultSet results) {
+    public MappedPriorityQueue search(FeatureVector featVec, int nResults, MappedPriorityQueue results) {
         // initialize loc & direction to search
 
         return results;

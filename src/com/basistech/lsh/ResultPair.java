@@ -1,12 +1,12 @@
 package com.basistech.lsh;
 
-public class ResultPair {
-    public ResultPair(Object result, int score) {
+public class ResultPair<T> {
+    public ResultPair(T result, double score) {
         this.result = result;
         this.score = score;
     }
-    public Object result;
-    public int score;
+    public T result;
+    public double score;
     
     public String toString() {
         return "(" + result.toString() + "," + score + ")";        
