@@ -53,7 +53,7 @@ public class PetrovicLSHTable {
     	int bucket = computeSignature(featVec);
     	int start=bucket*maxPerBucket;
     	int end=bucket*(maxPerBucket+1)-1;
-    	for(int i=start; i<end && table[i]!=null; i++){
+    	for(int i=start; i<end && i<table.length && table[i]!=null; i++){
     		Document doc=table[i];
     		Integer val=results.get(doc);
     		if(val==null){

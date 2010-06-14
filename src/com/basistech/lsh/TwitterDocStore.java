@@ -18,15 +18,16 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class TDT5DocStore {
+public class TwitterDocStore {
     private List<File> fileList = new ArrayList<File>();
     private int docCount;
     private boolean hasCount = false;
     private int nextToParse=0;
-    private int currDoc=-1;
-    NodeList currFileDocs;
+    //private int currDoc=-1;
+    BufferedReader currFileTweets;
+    private TFIDF2 tfidf = new TFIDF2();
     private HashMap<String,List<String>> docTopics = new HashMap<String,List<String>>();
-    public TDT5DocStore(){}
+    public TwitterDocStore(){}
     
     public void enqueueDir(String dir, FilenameFilter filter){
         enqueueDir(new File(dir),filter);
@@ -98,100 +99,50 @@ public class TDT5DocStore {
         System.out.println("Loaded "+numLoaded+" Topics");
     }catch(Exception e){throw new RuntimeException(e);}}
     
-    public int getDocCount(){
+    public int getDocCount(){try{
         if(hasCount){
             return docCount;
         }
-        int i=0;
-        int j=0;
-        NodeList children = null;
-        Node doc = null;
-        try{
-            for(File f: fileList){
-                org.w3c.dom.Document d = parseFile(f);
-                NodeList fileDocs = d.getChildNodes().item(0).getChildNodes();
-                for(i = 0; i<fileDocs.getLength(); i++){
-                    doc = fileDocs.item(i);
-                    if("DOC".equals(doc.getNodeName())){
-                        children = doc.getChildNodes();
-                        boolean hasText=false;
-                        boolean hasDocno=false;
-                        String docno=null;
-                        String text=null;
-                        for(j = 0; j<children.getLength() && hasText==false; j++){
-                            Node n = children.item(j);
-                            //System.out.println(n.getTextContent());
-                            if("TEXT".equals(n.getNodeName())){
-                                docCount++;
-                                //System.out.println(n.getTextContent());
-                                hasText=true;
-                                text=n.getTextContent();
-                                
-                            }
-                            if("DOCNO".equals(n.getNodeName())){
-                                hasDocno=true;
-                                docno=n.getTextContent();
-                                while(docno.charAt(0)==' '){
-                                    docno=docno.substring(1);
-                                }
-                                while(docno.charAt(docno.length()-1)==' '){
-                                    docno=docno.substring(0,docno.length()-1);
-                                }
-                            }
-                        }
-                        if(hasText&&hasDocno){
-                            List<String> topics = this.docTopics.get(docno);
-                            if(topics==null)
-                                TDT5Document.t.computeFeatures(new StringReader(text),true,true);
-                        }
+        for(File f: fileList){
+            FileReader fr=new FileReader(f);
+            BufferedReader br = new BufferedReader(fr);
+            while(br.readLine()!=null){
+                docCount++;
+                if(docCount%100000==0){
+                    System.out.print(".");
+                    if(docCount%5000000==0){
+                        System.out.println();
                     }
                 }
             }
-        }catch(Exception e){
-            //System.out.println("i:"+i+" j:"+j);
-            //System.out.println(((CharacterDataImpl)children).getData());
-            throw new RuntimeException(e);
         }
+        System.out.println();
         hasCount=true;
         return docCount;
-    }
+    }catch(Exception e){throw new RuntimeException(e);}}
     
-    public Document nextDoc(){
+    public Tweet nextDoc(){
         String text = null;
         String docno = null;
+        String currTweet=null;
         try{
             do{
-                currDoc++;
-                if(currFileDocs==null||currDoc==currFileDocs.getLength()){
+                if(currFileTweets==null||(currTweet=currFileTweets.readLine())==null){
                     if(nextToParse==fileList.size()){
                         return null;
                     }
-                    org.w3c.dom.Document d = parseFile(fileList.get(nextToParse));
-                    currFileDocs=d.getChildNodes().item(0).getChildNodes();
-                    currDoc=0;
+                    
+                    FileReader fr = new FileReader(fileList.get(nextToParse));
+                    currFileTweets=new BufferedReader(fr);
                     nextToParse++;
                 }
-            }while(!"DOC".equals(currFileDocs.item(currDoc).getNodeName()));
-            NodeList children = currFileDocs.item(currDoc).getChildNodes();
-            for(int j = 0; text==null || docno==null; j++){
-                Node n = children.item(j);
-                if("TEXT".equals(n.getNodeName())){
-                    text=n.getTextContent();
-                }
-                if("DOCNO".equals(n.getNodeName())){
-                    docno=n.getTextContent();
-                    while(docno.charAt(0)==' '){
-                        docno=docno.substring(1);
-                    }
-                    while(docno.charAt(docno.length()-1)==' '){
-                        docno=docno.substring(0,docno.length()-1);
-                    }
-                }
-            }
+            }while(currTweet==null);
         }catch(Exception e){
             throw new RuntimeException(e);
         }
-        TDT5Document theReturn = new TDT5Document(text);
+        text=currTweet.substring(currTweet.indexOf("\t")+1);
+        text=text.substring(text.indexOf("\t")+1);
+        Tweet theReturn = new Tweet(text,tfidf.computeFeatures(text,false));
         theReturn.setId(docno);
         List<String> topics = this.docTopics.get(docno);
         if(topics==null)

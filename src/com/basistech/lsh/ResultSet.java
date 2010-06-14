@@ -2,6 +2,7 @@ package com.basistech.lsh;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -26,6 +27,7 @@ public class ResultSet <T> {
 
     private int capacity;
     private PriorityQueue<ResultPair<T>> scoreCache;
+    private HashSet<T> currentContents = new HashSet<T>();
     private static ScoreCompareDesc cmp;
 
     static {
@@ -38,14 +40,22 @@ public class ResultSet <T> {
     }
 
     public void add(T result, double score) {
+        if(currentContents.contains(result)){
+            return;
+        }
         ResultPair<T> bot = scoreCache.peek();
         if (bot != null && score <= bot.score && scoreCache.size() == capacity) {
             return;
         }
-        if(scoreCache.size()==capacity){
-            scoreCache.poll();
+        if(result instanceof TThread){
+            System.out.println("added tthread");
         }
-        scoreCache.add(new ResultPair<T>(result, score));
+        if(scoreCache.size()==capacity){
+            currentContents.remove(scoreCache.poll().result);
+        }
+        ResultPair<T> toadd = new ResultPair<T>(result, score);
+        scoreCache.add(toadd);
+        currentContents.add(toadd.result);
     }
 
     public ResultPair<T> worst() {

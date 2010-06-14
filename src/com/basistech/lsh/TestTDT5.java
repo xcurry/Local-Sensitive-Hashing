@@ -26,9 +26,9 @@ public class TestTDT5 {
         docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\tkn_sgm",english);
         //docs.enqueueDir("/basis/users/cdoersch/data/tdt5/data/tkn_sgm",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
-        int nDocs = 278108;//docs.getDocCount();
-        System.out.println("Found "+nDocs+" documents");
         docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
+        int nDocs = docs.getDocCount();
+        System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
@@ -45,7 +45,7 @@ public class TestTDT5 {
                       (Math.log(1-Math.pow(.8,(double)dimension/2))+
                               Math.log(1+Math.pow(.8,(double)dimension/2)))
             );
-        
+        System.out.println(nTables);
         PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,2000);
         Document firstDoc = docs.nextDoc(); 
         lsh.add(firstDoc);

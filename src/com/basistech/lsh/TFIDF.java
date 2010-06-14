@@ -68,22 +68,22 @@ public class TFIDF {
     //    nDocs = files.length;
     //}
 
-    public FeatureVector computeFeatures(Reader f, boolean useIDF) throws IOException {
+    public FeatureVector computeFeatures(Reader f, boolean useIDF, boolean updateDocCount) throws IOException {
         TFPair tfp = computeTermFrequency(f);
         int tfTotal = tfp.total;
         FeatureVector fv = new FeatureVector();
-        int wordCount=0;
-        if(useIDF){
+        //int wordCount=0;
+        if(useIDF&&updateDocCount){
             for (Entry<String, Integer> entry : tfp.tf.entrySet()) {
                 String tok = entry.getKey();
-                int termCount = entry.getValue();
+                //int termCount = entry.getValue();
                 int termId = vocab.put(tok);
                 Integer count = df.get(termId);
                 if (count == null) {
                     count = 0;
                 }
                 df.put(termId, count + 1);
-                wordCount+=termCount;
+                //wordCount+=termCount;
             }
         }
         totalWordCount+=tfp.total;
@@ -94,8 +94,14 @@ public class TFIDF {
             double tf = termCount / (double)tfTotal;/// (termCount+.5+1.5*tfp.total*nDocs/totalWordCount);
             int termId = vocab.put(tok);
             if(useIDF){
-                int docCount = df.get(termId);
-                double idf = LogN.value(nDocs) - LogN.value(docCount);//Math.log(totalWordCount/(double) docCount)/Math.log(totalWordCount+1);
+                Integer docCount = df.get(termId);
+                double dbDocCount=0;
+                if(docCount==null){
+                    dbDocCount=.5;
+                }else{
+                    dbDocCount=docCount;
+                }
+                double idf = LogN.value(nDocs) - Math.log(dbDocCount)/Math.log(2);//Math.log(totalWordCount/(double) docCount)/Math.log(totalWordCount+1);
                 fv.put(termId, tf*idf);
             }else{
             	fv.put(termId, tf);
@@ -117,7 +123,7 @@ public class TFIDF {
 
     public void computeTFIDF(File[] files) throws IOException {
         for (File f : files) {
-            tfidf.put(f.getName(), computeFeatures(new FileReader(f), true));
+            tfidf.put(f.getName(), computeFeatures(new FileReader(f), true, true));
         }
         df = null;
     }

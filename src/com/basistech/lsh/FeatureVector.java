@@ -103,5 +103,19 @@ public class FeatureVector implements Map<Integer, Double>{
 
     public Collection<Double> values() {
         return rep.values();
-    }	
+    }
+    
+    public double merge(FeatureVector other){
+        double total=0.0;
+        for(Integer id:other.keySet()){
+            Double count=rep.get(id);
+            if(count==null){
+                count=0.0;
+            }
+            double toadd=other.get(id);
+            total+=toadd;
+            rep.put(id,count+toadd);
+        }
+        return total;
+    }
 }
