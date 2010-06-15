@@ -36,18 +36,9 @@ public class TestUmass {
         
         ArrayList<Double> nearestNeighbor = new ArrayList<Double>();
         nearestNeighbor.add(1.0);
-        int dimension=13;
-        int maxPerBucket = Math.max(2,(int)(.5*nDocs/Math.pow(2, dimension)));
-        int nTables = (int)Math.ceil(
-                               Math.log(.025)/
-                      (Math.log(1-Math.pow(.8,(double)dimension/2))+
-                              Math.log(1+Math.pow(.8,(double)dimension/2)))
-            );
         
-        //PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,1000);
         ArrayList<Document> prevDocs = new ArrayList<Document>();
         Document firstDoc = docs.nextDoc(); 
-        //lsh.add(firstDoc);
         prevDocs.add(firstDoc);
         
         isnew_ground.add(true);
@@ -63,19 +54,13 @@ public class TestUmass {
                 if(currDoc.getAnnotations().size()==0){
                     continue;
                 }
-                //if(i%3==0){
-                //    continue;
-                //}
-                //ResultSet<Document> res = lsh.search(currDoc, 1);
                 ResultPair<Document> bestDoc = new ResultPair<Document>(null,Double.NEGATIVE_INFINITY);
-                int z = 0;
                 for(Document d:prevDocs){
                     double score=CosineSimilarity.value(d.getFeatures(),currDoc.getFeatures());
                     if(score>bestDoc.score){
                         bestDoc = new ResultPair<Document>(d,score);
                     }
                 }
-                //List<ResultPair<Document>> resultList = res.popResults();
                 
                 nearestNeighbor.add(1-bestDoc.score);
                 if(bestDoc.score>.9){
@@ -97,7 +82,7 @@ public class TestUmass {
         }catch(IOException e){throw new RuntimeException(e);}
         System.out.println(isnew_ground.size()+" Documents added to LSH");
         
-        PRPlot plot = new PRPlot(isnew_ground,nearestNeighbor);
+        new PRPlot(isnew_ground,nearestNeighbor);
     }
 
 }

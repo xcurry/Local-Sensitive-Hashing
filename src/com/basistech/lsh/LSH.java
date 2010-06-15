@@ -3,6 +3,7 @@ package com.basistech.lsh;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class LSH {
     private int nTables;
     private int nFeatures;

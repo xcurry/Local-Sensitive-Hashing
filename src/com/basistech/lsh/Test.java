@@ -90,7 +90,7 @@ public class Test {
         
     public static void testResultSet() {
         int capacity = 2;
-        MappedPriorityQueue rs = new MappedPriorityQueue(capacity);
+        MappedPriorityQueue<String> rs = new MappedPriorityQueue<String>(capacity);
         
         String o1 = "key1";
         String o2 = "key2";

@@ -1,12 +1,10 @@
 package com.basistech.lsh;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
@@ -14,9 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 public class TwitterDocStore {
     private List<File> fileList = new ArrayList<File>();
@@ -27,7 +22,10 @@ public class TwitterDocStore {
     BufferedReader currFileTweets;
     private TFIDF2 tfidf = new TFIDF2();
     private HashMap<String,List<String>> docTopics = new HashMap<String,List<String>>();
-    public TwitterDocStore(){}
+    public TwitterDocStore(){
+        //configure tokenizer
+        tfidf.setGiveProportions(false);
+    }
     
     public void enqueueDir(String dir, FilenameFilter filter){
         enqueueDir(new File(dir),filter);
@@ -38,40 +36,6 @@ public class TwitterDocStore {
         List<File> tmplist = Arrays.asList(dir.listFiles(filter));
         Collections.sort(tmplist);
         fileList.addAll(tmplist);
-    }
-    
-    /*
-     * The TDT5 people almost followed the XML standard, but not quite
-     * closely enough that Java's XML parsers can read it.  We need
-     * to fix it for them.
-     */
-    private org.w3c.dom.Document parseFile(File f) throws Exception{
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        
-        FileReader fr=new FileReader(f);
-        StringBuilder data = new StringBuilder("<DOCUMENT>");
-        BufferedReader reader = new BufferedReader(fr);
-        int read=0;
-        char[] buf = new char[1024];
-        while((read=reader.read(buf)) != -1){
-            data.append(buf, 0, read);
-        }
-        reader.close();
-        data.append("</DOCUMENT>");
-        String str =data.toString(); 
-        str = str.replaceAll("&  AMP;", "&amp;");
-        str = str.replaceAll("&,", "&amp;,");
-        str = str.replaceAll("& Lt;", "&lt; ");
-        str = str.replaceAll("  >  ", "  &gt;  ");
-        str = str.replaceAll("< ", " &lt;)");
-        str = str.replaceAll(" <\\)", " &lt;)");
-        str = str.replaceAll(" <\"", " &lt;)");
-        str = str.replaceAll("& ", "&amp; ");
-        //str = str.replaceAll("\"", "&quot;");
-
-        ByteArrayInputStream bais = new ByteArrayInputStream(str.getBytes("UTF-8"));
-        return db.parse(bais);
     }
     
     public void loadDocTopics(String file){try{
@@ -153,7 +117,7 @@ public class TwitterDocStore {
         text=text.substring(text.indexOf("\t")+1);
         //remove html tags
         text = text.replaceAll("\\<.*?\\>", "");
-        Tweet theReturn = new Tweet(text,user, tfidf.computeFeatures(text,false));
+        Tweet theReturn = new Tweet(text,user, tfidf.computeFeatures(text));
         theReturn.setId(docno);
         List<String> topics = this.docTopics.get(docno);
         if(topics==null)

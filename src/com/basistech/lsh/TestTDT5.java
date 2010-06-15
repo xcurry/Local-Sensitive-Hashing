@@ -93,7 +93,7 @@ public class TestTDT5 {
         }catch(IOException e){throw new RuntimeException(e);}
         System.out.println(isnew_ground.size()+" Documents added to LSH");
         
-        PRPlot plot = new PRPlot(isnew_ground,nearestNeighbor);
+        new PRPlot(isnew_ground,nearestNeighbor);
     }
 
 }

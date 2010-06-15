@@ -7,6 +7,7 @@ import java.util.PriorityQueue;
 import java.util.Map.Entry;
 
 //This class is probably broken.
+@Deprecated
 public class MappedPriorityQueue <T> {
     private static class ScoreCompareDesc implements Comparator<ResultPair<?>> {
         public int compare(ResultPair<?> p1, ResultPair<?> p2) {

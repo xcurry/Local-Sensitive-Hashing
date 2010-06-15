@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+@Deprecated
 public class LSHTable {
     private class Storage implements Comparable<Storage> {
         public BitVector signature;

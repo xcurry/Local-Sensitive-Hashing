@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 //and computeTermFrequency work, though
 //TODO: make feature extractor interface
 //TODO: add lexer interface & whitespace lexer
+@Deprecated
 public class TFIDF {
     private HashMap<Integer, Integer> df;
     private Vocabulary vocab;	

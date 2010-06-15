@@ -11,11 +11,32 @@ public class TFIDF2 {
     private HashMap<Integer, Integer> df;
     private Vocabulary vocab;	
     private int nDocs;
+    
+    //if false, give featurevectors that are raw counts. 
+    private boolean giveProportions=true;
+    //idf-weight the featurevectors.  Not compatible with giveProportions==false.
+    private boolean useIDF=false;
 
     public TFIDF2() {
         df = new HashMap<Integer, Integer>();
         vocab = new Vocabulary();
     }
+
+    public void setGiveProportions(boolean giveProportions) {
+        this.giveProportions = giveProportions;
+        if(!giveProportions){
+            useIDF=false;
+        }
+    }
+
+    public void setUseIDF(boolean useIDF) {
+        this.useIDF = useIDF;
+        if(useIDF){
+            giveProportions=true;
+        }
+    }
+
+
 
     private class TFPair {
         public HashMap<String, Integer> tf;
@@ -23,6 +44,9 @@ public class TFIDF2 {
     }
     
     public void addToIDF(String text){
+        if(!useIDF){
+            throw new RuntimeException("cannot add to the IDF of a TFIDF2 that's not using IDF");
+        }
         TFPair tfp = computeTermFrequency(text);
         for (Entry<String, Integer> entry : tfp.tf.entrySet()) {
             String tok = entry.getKey();
@@ -40,14 +64,9 @@ public class TFIDF2 {
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
         String[] toks = str.toLowerCase().split("\\W+");
-        //System.out.println(str+"\n\n");
-        //for(int i=0; i<toks.length; i++){
-        //    System.out.println(i+":"+toks[i]);
-        //}
-        //try{
-        //    Thread.sleep(5);
-        //}catch(Exception e){}
         for (String tok : toks) {
+            //if first or last character isn't a word character, then 
+            //we get the empty string as a token
             if("".equals(tok)){
                 continue;
             }
@@ -64,7 +83,7 @@ public class TFIDF2 {
         return tfp;
     }
 
-    public FeatureVector computeFeatures(String f, boolean useIDF){
+    public FeatureVector computeFeatures(String f){
         TFPair tfp = computeTermFrequency(f);
         int tfTotal = tfp.total;
         FeatureVector fv = new FeatureVector();
@@ -72,7 +91,10 @@ public class TFIDF2 {
         for (Entry<String, Integer> entry : tfp.tf.entrySet()) {
             String tok = entry.getKey();
             int termCount = entry.getValue();
-            double tf = termCount;// / (double)tfTotal;
+            double tf = termCount;
+            if(giveProportions){
+                tf /= (double)tfTotal;
+            }
             int termId = vocab.put(tok);
             if(useIDF){
                 Integer docCount = df.get(termId);

@@ -16,7 +16,7 @@ public class PRPlot extends ApplicationFrame{
     private static final long serialVersionUID = -8571832684556874448L;
     
     public static void main(String[] args){
-        PRPlot pr=new PRPlot(Arrays.asList(new Boolean[]{true,false,true,false}),
+        new PRPlot(Arrays.asList(new Boolean[]{true,false,true,false}),
                              Arrays.asList(new Double[]{.6,.4,.8,.7})); 
     }
 
