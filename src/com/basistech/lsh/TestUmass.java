@@ -53,7 +53,7 @@ public class TestUmass {
         prevDocs.add(firstDoc);
         
         isnew_ground.add(true);
-        labelset.addAll(firstDoc.getTopics());
+        labelset.addAll(firstDoc.getAnnotations());
         File f = new File("distances.log");
         try{
             PrintStream fw=new PrintStream(f);
@@ -62,7 +62,7 @@ public class TestUmass {
                     System.out.println("Processing document "+i);
                 }
                 Document currDoc = docs.nextDoc();
-                if(currDoc.getTopics().size()==0){
+                if(currDoc.getAnnotations().size()==0){
                     continue;
                 }
                 //if(i%3==0){
@@ -85,8 +85,8 @@ public class TestUmass {
                     fw.println("------bestDoc------"+bestDoc.result.getText()+"\n\n");
                     fw.println("Cosine Similarity:"+CosineSimilarity.value(currDoc.getFeatures(), bestDoc.result.getFeatures()));
                 }
-                isnew_ground.add(!labelset.containsAll(currDoc.getTopics()));
-                labelset.addAll(currDoc.getTopics());
+                isnew_ground.add(!labelset.containsAll(currDoc.getAnnotations()));
+                labelset.addAll(currDoc.getAnnotations());
                 
                 if(isnew_ground.get(nearestNeighbor.size()-1)){
                     fw.println("new:"+nearestNeighbor.get(nearestNeighbor.size()-1));

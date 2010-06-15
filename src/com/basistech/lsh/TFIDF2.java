@@ -45,7 +45,17 @@ public class TFIDF2 {
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
         String[] toks = str.toLowerCase().split("\\W+");
+        //System.out.println(str+"\n\n");
+        //for(int i=0; i<toks.length; i++){
+        //    System.out.println(i+":"+toks[i]);
+        //}
+        //try{
+        //    Thread.sleep(5);
+        //}catch(Exception e){}
         for (String tok : toks) {
+            if("".equals(tok)){
+                continue;
+            }
             Integer count = tf.get(tok);
             if (count == null) {
                 count = 0;

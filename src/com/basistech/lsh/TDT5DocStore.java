@@ -196,7 +196,7 @@ public class TDT5DocStore {
         List<String> topics = this.docTopics.get(docno);
         if(topics==null)
             topics = new ArrayList<String>();
-        theReturn.setTopics(topics);
+        theReturn.setAnnotations(topics);
         return theReturn;
     }
 }

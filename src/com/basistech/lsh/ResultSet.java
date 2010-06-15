@@ -48,7 +48,7 @@ public class ResultSet <T> {
             return;
         }
         if(result instanceof TThread){
-            System.out.println("added tthread");
+            System.out.println("added tthread with entropy "+((TThread)result).getEntropy());
         }
         if(scoreCache.size()==capacity){
             currentContents.remove(scoreCache.poll().result);

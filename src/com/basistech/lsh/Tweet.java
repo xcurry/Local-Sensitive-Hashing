@@ -7,7 +7,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.List;
 
-public class Tweet implements Document{
+public class Tweet implements Document, Comparable<Tweet>{
 	private FeatureVector features;
 	private String text;
 	private String id;
@@ -55,11 +55,11 @@ public class Tweet implements Document{
         this.id = id;
     }
 
-    public List<String> getTopics() {
+    public List<String> getAnnotations() {
         return topics;
     }
 
-    public void setTopics(List<String> topics) {
+    public void setAnnotations(List<String> topics) {
         this.topics = topics;
     }
 
@@ -77,5 +77,15 @@ public class Tweet implements Document{
 
     public void setText(String text) {
         this.text = text;
+    }
+    
+    public int compareTo(Tweet other){
+        if(other.getTThread().getEntropy()>3.5&&tthread.getEntropy()<=3.5){
+            return 1;
+        }
+        if(other.getTThread().getEntropy()<=3.5&&tthread.getEntropy()>3.5){
+            return -1;
+        }
+        return other.getTThread().getCount()-tthread.getCount();
     }
 }

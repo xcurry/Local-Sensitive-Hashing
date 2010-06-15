@@ -6,6 +6,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -136,6 +140,14 @@ public class TwitterDocStore {
                     currFileTweets=new BufferedReader(fr);
                     nextToParse++;
                 }
+                
+                //if there are non-ascii characters, throw out this tweet
+                CharsetDecoder decoder = Charset.forName("US-ASCII").newDecoder();
+                try{
+                    decoder.decode(ByteBuffer.wrap(currTweet.getBytes()));
+                }catch(Exception e){
+                    currTweet=null;
+                }
             }while(currTweet==null);
         }catch(Exception e){
             throw new RuntimeException(e);
@@ -143,12 +155,14 @@ public class TwitterDocStore {
         text=currTweet.substring(currTweet.indexOf("\t")+1);
         String user=text.substring(0,text.indexOf("\t"));
         text=text.substring(text.indexOf("\t")+1);
+        //remove html tags
+        text = text.replaceAll("\\<.*?\\>", "");
         Tweet theReturn = new Tweet(text,user, tfidf.computeFeatures(text,false));
         theReturn.setId(docno);
         List<String> topics = this.docTopics.get(docno);
         if(topics==null)
             topics = new ArrayList<String>();
-        theReturn.setTopics(topics);
+        theReturn.setAnnotations(topics);
         return theReturn;
     }
 }

@@ -51,11 +51,11 @@ public class TDT5Document implements Document{
         this.id = id;
     }
 
-    public List<String> getTopics() {
+    public List<String> getAnnotations() {
         return topics;
     }
 
-    public void setTopics(List<String> topics) {
+    public void setAnnotations(List<String> topics) {
         this.topics = topics;
     }
 

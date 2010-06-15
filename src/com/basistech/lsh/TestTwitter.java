@@ -6,6 +6,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,8 +16,8 @@ public class TestTwitter {
     /**
      * @param args
      */
+    private static int recordingPeriod=10000;//100000;
     public static void main(String[] args) {
-        int recordingPeriod=10000;//100000;
         
         TwitterDocStore docs = new TwitterDocStore();
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
@@ -53,6 +54,7 @@ public class TestTwitter {
         File f = new File("distances.log");
         LinkedList<TThread> recentThreads = new LinkedList<TThread>();
         ResultSet<TThread> fastestThreads = new ResultSet<TThread>(20);
+        ArrayList<Tweet> annotatedDocs = new ArrayList<Tweet>();
         try{
             PrintStream fw=new PrintStream(f);
             for(int i=1; i<nDocs; i++){
@@ -69,7 +71,7 @@ public class TestTwitter {
                 TThread added;
                 if(resultList.size()>0){
                     ResultPair<Document> bestDoc=resultList.get(0);
-                    if(bestDoc.score>.5){
+                    if(bestDoc.score>.500001){
                         added=((Tweet)bestDoc.result).getTThread();
                         fw.println("old:"+bestDoc.score);
                         if(bestDoc.score>.9){
@@ -98,6 +100,10 @@ public class TestTwitter {
                 
                 lsh.add(currDoc);
                 
+                if(currDoc.getAnnotations().size()>0){
+                    annotatedDocs.add((Tweet)currDoc);
+                }
+                
             }
         }catch(IOException e){throw new RuntimeException(e);}
         
@@ -110,8 +116,27 @@ public class TestTwitter {
             printThread(t.result);
         }
         
+        Collections.sort(annotatedDocs);
+        
+        double average_precision=0.0;
+        int event_docs=0;
+        int total_docs=0;
+        for(int i=0; i<annotatedDocs.size(); i++){
+            total_docs++;
+            if(is_event(annotatedDocs.get(i))){
+                event_docs++;
+                average_precision+=event_docs/(double)total_docs;
+            }
+        }
+        average_precision/=event_docs;
+        System.out.println("Average Precision:"+average_precision);
+        
         System.exit(0);
         
+    }
+        
+    public static boolean is_event(Tweet t){
+        return t.getAnnotations().get(0).equals("Event");
     }
     
     public static void printThread(TThread res){
@@ -128,7 +153,7 @@ public class TestTwitter {
     
     public static void addThread(TThread t, ResultSet<TThread> fastestThreads){
         //System.out.println(t.getEntropy());
-        if(t.getEntropy()>3.5){
+        if(t.getEntropy()>3.5 && t.getStartTweet()>recordingPeriod){
             fastestThreads.add(t,t.getCount());
         }
     }
