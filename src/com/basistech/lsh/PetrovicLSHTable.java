@@ -11,7 +11,7 @@ public class PetrovicLSHTable {
     private int[] nextSlot;
     private int maxPerBucket;
 
-    public PetrovicLSHTable(int dimension, int maxPerBucket, GlobalStorage gs, int projectionSeed) {
+    public PetrovicLSHTable(int dimension, int maxPerBucket, int projectionSeed) {
         this.dimension = dimension;
         if(dimension>31){
         	throw new IllegalArgumentException("Dimensions greater than 31 not supported, dimension="+dimension);

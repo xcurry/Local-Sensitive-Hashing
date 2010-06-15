@@ -22,9 +22,8 @@ public class PetrovicLSH {
     
     @SuppressWarnings("unchecked")
     public PetrovicLSH(int dimension, int maxPerBucket, int nTables, int numRecentDocs){
-    	GlobalStorage gs = new GlobalStorage();
     	for(int i=1; i<nTables; i++){
-    		tables.add(new PetrovicLSHTable(dimension, maxPerBucket, gs, i));
+    		tables.add(new PetrovicLSHTable(dimension, maxPerBucket, i));
     		System.out.println("Added table "+i);
     	}
     	this.nTables=nTables;

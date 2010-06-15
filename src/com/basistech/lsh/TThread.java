@@ -1,6 +1,7 @@
 package com.basistech.lsh;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class TThread {
@@ -10,6 +11,7 @@ public class TThread {
     private boolean hasEntropy = false;
     private double entropy;
     private static double LOG2=Math.log(2);
+    private HashSet<String> users = new HashSet<String>();
     
     public TThread(int startTweet){
         this.startTweet=startTweet;
@@ -21,7 +23,10 @@ public class TThread {
     }
 
     public void addTweet(Tweet t){
-        count++;
+        if(!users.contains(t.getUser())){
+            count++;
+            users.add(t.getUser());
+        }
         tweets.add(t);
         if(hasEntropy){
             System.out.println("warning: invalidating entropy");
