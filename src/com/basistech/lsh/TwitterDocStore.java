@@ -141,8 +141,9 @@ public class TwitterDocStore {
             throw new RuntimeException(e);
         }
         text=currTweet.substring(currTweet.indexOf("\t")+1);
+        String user=text.substring(0,text.indexOf("\t"));
         text=text.substring(text.indexOf("\t")+1);
-        Tweet theReturn = new Tweet(text,tfidf.computeFeatures(text,false));
+        Tweet theReturn = new Tweet(text,user, tfidf.computeFeatures(text,false));
         theReturn.setId(docno);
         List<String> topics = this.docTopics.get(docno);
         if(topics==null)

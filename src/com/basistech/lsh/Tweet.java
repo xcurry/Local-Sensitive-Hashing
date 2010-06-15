@@ -13,6 +13,7 @@ public class Tweet implements Document{
 	private String id;
 	private List<String> topics;
 	private TThread tthread = null;
+	private String user;
 
 	//public Document(FeatureVector features) {
 	//	super();
@@ -27,14 +28,19 @@ public class Tweet implements Document{
 	//    }
 	//}
 	
-	public Tweet(String str, FeatureVector fv){
+	public Tweet(String str, String user, FeatureVector fv){
 	    //text=str;
 	    features=fv;
 	    text=str;
+	    this.user=user;
 	}
 
 	public TThread getTThread() {
         return tthread;
+    }
+
+    public String getUser() {
+        return user;
     }
 
     public void setTThread(TThread tthread) {

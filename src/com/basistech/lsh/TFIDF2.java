@@ -67,7 +67,7 @@ public class TFIDF2 {
         for (Entry<String, Integer> entry : tfp.tf.entrySet()) {
             String tok = entry.getKey();
             int termCount = entry.getValue();
-            double tf = termCount / (double)tfTotal;
+            double tf = termCount;// / (double)tfTotal;
             int termId = vocab.put(tok);
             if(useIDF){
                 Integer docCount = df.get(termId);
