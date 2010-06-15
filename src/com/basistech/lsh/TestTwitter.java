@@ -1,13 +1,10 @@
 package com.basistech.lsh;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,10 +19,12 @@ public class TestTwitter {
         TwitterDocStore docs = new TwitterDocStore();
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
-        docs.enqueueDir("/basis/users/cdoersch/data/twitter/split",null);
+        docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
-        int nDocs = 96378557;//docs.getDocCount();
+        //int nDocs = 96378557;//docs.getDocCount();
+        int nDocs = 3603638; // just split/1
+        
         
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
@@ -44,7 +43,8 @@ public class TestTwitter {
                       (Math.log(1-Math.pow(.8,(double)dimension/2))+
                               Math.log(1+Math.pow(.8,(double)dimension/2)))
             );
-        System.out.println(maxPerBucket);
+        System.out.println("bucket sz: " + maxPerBucket);
+        System.out.println("n tables: " + nTables);
         PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,2000);
         //Document firstDoc = docs.nextDoc(); 
         //lsh.add(firstDoc);

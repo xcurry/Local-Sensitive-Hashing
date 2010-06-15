@@ -106,6 +106,7 @@ public class FeatureVector implements Map<Integer, Double>{
     }
     
     public double merge(FeatureVector other){
+        // word counts for this & other        
         double total=0.0;
         for(Integer id:other.keySet()){
             Double count=rep.get(id);

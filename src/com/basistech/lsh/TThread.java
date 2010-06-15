@@ -1,8 +1,10 @@
 package com.basistech.lsh;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class TThread {
     private int count=0;
@@ -46,14 +48,32 @@ public class TThread {
         if(hasEntropy){
             return entropy;
         }
-        FeatureVector fv = new FeatureVector();
-        double total=0;
+//        FeatureVector fv = new FeatureVector();
+//        double total=0;
+//        for(Tweet t: tweets){
+//            total+=fv.merge(t.getFeatures());
+//        }
+//        entropy=0;
+//        for(double d: fv.values()){
+//            entropy-=d/total*Math.log(d/total);
+//        }
+        HashMap<String, Integer> tf = new HashMap<String, Integer>();
+        double totalCount = 0.0d;
         for(Tweet t: tweets){
-            total+=fv.merge(t.getFeatures());
+            String text = t.getText();
+            for (String tok : text.split("\\s+")) {
+                Integer count = tf.get(tok);
+                if (count == null) {
+                    count = 0;
+                }
+                tf.put(tok, count + 1);
+                ++totalCount;
+            }
         }
         entropy=0;
-        for(double d: fv.values()){
-            entropy-=d/total*Math.log(d/total);
+        for (Integer count : tf.values()) {
+            double p = count / totalCount;
+            entropy-= p * Math.log(p);
         }
         entropy/=LOG2;
         hasEntropy = true;

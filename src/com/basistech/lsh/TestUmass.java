@@ -1,13 +1,11 @@
 package com.basistech.lsh;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 public class TestUmass {
 
