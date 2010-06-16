@@ -16,6 +16,10 @@ public class TestTwitter {
     private static int recordingPeriod=100000;
     public static void main(String[] args) {
         
+        File logFile = new File("/u1/fsd/data/twitter/threads2.log");
+        boolean printThreadMembership=true;
+        boolean printSummary=false;
+        
         TwitterDocStore docs = new TwitterDocStore();
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
@@ -35,7 +39,7 @@ public class TestTwitter {
         
         
         int dimension=13;
-        int maxPerBucket = Math.max(2,(int)(.1*nDocs/Math.pow(2, dimension)));
+        int maxPerBucket = Math.max(2,(int)(.001*nDocs/Math.pow(2, dimension)));
         int nTables = (int)Math.ceil(
                                Math.log(.025)/
                       (Math.log(1-Math.pow(.8,(double)dimension/2))+
@@ -45,13 +49,12 @@ public class TestTwitter {
         System.out.println("n tables: " + nTables);
         PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,2000);
         
-        File f = new File("/u1/fsd/data/twitter/threads.log");
         LinkedList<TThread> recentThreads = new LinkedList<TThread>();
         ResultSet<TThread> fastestThreads = new ResultSet<TThread>(20);
         ArrayList<Tweet> annotatedDocs = new ArrayList<Tweet>();
         try{
             //create log file
-            PrintStream fw=new PrintStream(f);
+            PrintStream fw=new PrintStream(logFile);
             Document currDoc;
             int docNo=0;
             //loop through every tweet we have on file; currDoc is the current one.
@@ -127,23 +130,28 @@ public class TestTwitter {
                     annotatedDocs.add((Tweet)currDoc);
                 }
                 
-                fw.println(currDoc);
+                if(printThreadMembership){
+                    fw.println(currDoc);
+                }
                 docNo++;
                 
             }
+        
+            
+            //we're done with all the documents we're going to process.
+            //Go through the threads that we haven't yet had a chance
+            //to add to the final ResultSet.
+            while(recentThreads.size()>0){
+                TThread judged = recentThreads.poll();
+                addThreadIfEvent(judged,fastestThreads);
+            }
+            
+            for(ResultPair<TThread> t: fastestThreads.popResults()){
+                if(printSummary)
+                    printThread(t.result,fw);
+            }
+            
         }catch(IOException e){throw new RuntimeException(e);}
-        
-        //we're done with all the documents we're going to process.
-        //Go through the threads that we haven't yet had a chance
-        //to add to the final ResultSet.
-        while(recentThreads.size()>0){
-            TThread judged = recentThreads.poll();
-            addThreadIfEvent(judged,fastestThreads);
-        }
-        
-        for(ResultPair<TThread> t: fastestThreads.popResults()){
-            printThread(t.result);
-        }
         
         Collections.sort(annotatedDocs);
         
@@ -168,11 +176,11 @@ public class TestTwitter {
         return t.getAnnotations().get(0).equals("Event");
     }
     
-    public static void printThread(TThread res){
-        System.out.println("----------Post Count:"+res.getCount()+"----------");
+    public static void printThread(TThread res, PrintStream writer){
+        writer.println("----------Post Count:"+res.getCount()+"----------");
         int i = 0;
         for(Tweet t: res.getTweets()){
-            System.out.println(t.getText());
+            writer.println(t.getText());
             i++;
             if(i==10){
                 break;
