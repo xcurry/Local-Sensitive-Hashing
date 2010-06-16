@@ -63,13 +63,8 @@ public class TFIDF2 {
         //TODO: add lexer interface & whitespace lexer
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
-        String[] toks = str.toLowerCase().split("\\W+");
+        String[] toks = str.split("\\W+");
         for (String tok : toks) {
-            //if first or last character isn't a word character, then 
-            //we get the empty string as a token
-            if("".equals(tok)){
-                continue;
-            }
             Integer count = tf.get(tok);
             if (count == null) {
                 count = 0;

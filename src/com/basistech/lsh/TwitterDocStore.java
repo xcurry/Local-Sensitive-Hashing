@@ -117,6 +117,7 @@ public class TwitterDocStore {
         text=text.substring(text.indexOf("\t")+1);
         //remove html tags
         text = text.replaceAll("\\<.*?\\>", "");
+        text = text.trim();
         Tweet theReturn = new Tweet(text,user, tfidf.computeFeatures(text));
         theReturn.setId(docno);
         List<String> topics = this.docTopics.get(docno);

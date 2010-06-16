@@ -48,15 +48,32 @@ public class TThread {
         if(hasEntropy){
             return entropy;
         }
-        FeatureVector fv = new FeatureVector();
-        double total=0;
-        for(Tweet t: tweets){
-            total+=fv.merge(t.getFeatures());
+        
+        HashMap<String, Integer> unigramCount = new HashMap<String, Integer>();
+        double totalCount = 0.0d;
+        for (Tweet t : tweets) {
+            for (String tok : t.getText().split("\\W+")) {
+                Integer count = unigramCount.get(tok);
+                if (count == null) {
+                    count = 0;
+                }
+                unigramCount.put(tok, count + 1);
+                ++totalCount;
+            }
         }
-        entropy=0;
-        for(double d: fv.values()){
-            entropy-=d/total*Math.log(d/total);
+        for (int count : unigramCount.values()) {
+            double p = count / totalCount;
+            entropy -= p * Math.log(p);            
         }
+//        FeatureVector fv = new FeatureVector();
+//        double total=0;
+//        for(Tweet t: tweets){
+//            total+=fv.merge(t.getFeatures());
+//        }
+//        entropy=0;
+//        for(double d: fv.values()){
+//            entropy-=d/total*Math.log(d/total);
+//        }
         entropy/=LOG2;
         hasEntropy = true;
         return entropy;

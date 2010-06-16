@@ -13,18 +13,15 @@ public class TestTwitter {
     /**
      * @param args
      */
-    private static int recordingPeriod=100000;//100000;
+    private static int recordingPeriod=100000;
     public static void main(String[] args) {
         
         TwitterDocStore docs = new TwitterDocStore();
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
-        //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
-        docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
+        docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
-        //int nDocs = 96378557;//docs.getDocCount();
-        int nDocs = 3603638; // just split/1
-        
+        int nDocs = 96378557;//docs.getDocCount();
         
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
