@@ -18,9 +18,12 @@ public class TestTwitter {
         
         TwitterDocStore docs = new TwitterDocStore();
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
-        docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
+        //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
+        //docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
+        docs.enqueueDir("/u1/fsd/data/twitter/split",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
+        //nDocs only affects the sizes of the buckets in the LSH.
         int nDocs = 96378557;//docs.getDocCount();
         
         System.out.println("Found "+nDocs+" documents");
@@ -28,11 +31,9 @@ public class TestTwitter {
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
         
-        //ArrayList<Boolean> isnew_ground = new ArrayList<Boolean>();
-        //HashSet<String> labelset = new HashSet<String>();
+        int tweetsToProcess=nDocs;//5000000;
         
-        //ArrayList<Double> nearestNeighbor = new ArrayList<Double>();
-        //nearestNeighbor.add(1.0);
+        
         int dimension=13;
         int maxPerBucket = Math.max(2,(int)(.1*nDocs/Math.pow(2, dimension)));
         int nTables = (int)Math.ceil(
@@ -43,27 +44,27 @@ public class TestTwitter {
         System.out.println("bucket sz: " + maxPerBucket);
         System.out.println("n tables: " + nTables);
         PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,2000);
-        //Document firstDoc = docs.nextDoc(); 
-        //lsh.add(firstDoc);
         
-        //isnew_ground.add(true);
-        //labelset.addAll(firstDoc.getTopics());
-        File f = new File("distances.log");
+        File f = new File("/u1/fsd/data/twitter/threads.log");
         LinkedList<TThread> recentThreads = new LinkedList<TThread>();
         ResultSet<TThread> fastestThreads = new ResultSet<TThread>(20);
         ArrayList<Tweet> annotatedDocs = new ArrayList<Tweet>();
         try{
             //create log file
             PrintStream fw=new PrintStream(f);
-            for(int i=1; i<nDocs; i++){
-                //loop through every tweet we have on file; currDoc is the current one.
-                Document currDoc = docs.nextDoc();
-                if(i%10000==0){
-                    System.out.println("Processing document "+i);
+            Document currDoc;
+            int docNo=0;
+            //loop through every tweet we have on file; currDoc is the current one.
+            while((currDoc = docs.nextDoc())!=null){
+                
+                if(docNo%10000==0){
+                    System.out.println("Processing document "+docNo);
                 }
                 
                 //don't process every document--there's too many
-                if(i>=5000000){
+                //note that we may run out of tweets before docNo reaches 
+                //nDocs, because not all tweets in the files are actually returned.
+                if(docNo>=tweetsToProcess){
                     break;
                 }
                 
@@ -80,22 +81,22 @@ public class TestTwitter {
                         //Its thread is the one we'll modify
                         toAddTo=((Tweet)bestDoc.result).getTThread();
                         
-                        fw.println("old:"+bestDoc.score);
-                        if(bestDoc.score>.9){
-                            fw.println("------currDoc------\n"+currDoc.getText()+"\n\n");
-                            fw.println("------bestDoc------\n"+bestDoc.result.getText()+"\n\n");
-                            fw.println("Cosine Similarity:"+CosineSimilarity.value(currDoc.getFeatures(), bestDoc.result.getFeatures()));
-                        }
+                        //fw.println("old:"+bestDoc.score);
+                        //if(bestDoc.score>.9){
+                        //    fw.println("------currDoc------\n"+currDoc.getText()+"\n\n");
+                        //    fw.println("------bestDoc------\n"+bestDoc.result.getText()+"\n\n");
+                        //    fw.println("Cosine Similarity:"+CosineSimilarity.value(currDoc.getFeatures(), bestDoc.result.getFeatures()));
+                        //}
                     }else{
                         //we found other tweets, but they were too far in cosine distance.
                         //we'll start a new thread
-                        fw.println("new:"+bestDoc.score);
-                        toAddTo=new TThread(i);
+                        //fw.println("new:"+bestDoc.score);
+                        toAddTo=new TThread(docNo);
                     }
                 }else{
                     //we didn't collide with any documents, start a new thread
-                    fw.println("new:N/A");
-                    toAddTo=new TThread(i);
+                    //fw.println("new:N/A");
+                    toAddTo=new TThread(docNo);
                 }
                 ((Tweet)currDoc).setTThread(toAddTo);
                 
@@ -103,7 +104,7 @@ public class TestTwitter {
                 //thread's recording period, because at the end of the day
                 //we care only about the thread's growth near the beginning
                 //of its existence.
-                if(i-toAddTo.getStartTweet()<=recordingPeriod){
+                if(docNo-toAddTo.getStartTweet()<=recordingPeriod){
                     toAddTo.addTweet((Tweet)currDoc);
                 }
                 
@@ -125,6 +126,9 @@ public class TestTwitter {
                 if(currDoc.getAnnotations().size()>0){
                     annotatedDocs.add((Tweet)currDoc);
                 }
+                
+                fw.println(currDoc);
+                docNo++;
                 
             }
         }catch(IOException e){throw new RuntimeException(e);}

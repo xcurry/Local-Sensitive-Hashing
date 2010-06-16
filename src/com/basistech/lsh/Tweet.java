@@ -9,6 +9,7 @@ public class Tweet implements Document, Comparable<Tweet>{
 	private List<String> topics;
 	private TThread tthread = null;
 	private String user;
+	private String dateTime;
 
 	//public Document(FeatureVector features) {
 	//	super();
@@ -23,11 +24,12 @@ public class Tweet implements Document, Comparable<Tweet>{
 	//    }
 	//}
 	
-	public Tweet(String str, String user, FeatureVector fv){
+	public Tweet(String str, String user, String date, FeatureVector fv){
 	    //text=str;
 	    features=fv;
 	    text=str;
 	    this.user=user;
+	    dateTime=date;
 	}
 
 	public TThread getTThread() {
@@ -73,7 +75,7 @@ public class Tweet implements Document, Comparable<Tweet>{
     public void setText(String text) {
         this.text = text;
     }
-    
+
     public int compareTo(Tweet other){
         if(other.getTThread().getEntropy()>3.5&&tthread.getEntropy()<=3.5){
             return 1;
@@ -83,4 +85,9 @@ public class Tweet implements Document, Comparable<Tweet>{
         }
         return other.getTThread().getCount()-tthread.getCount();
     }
+    
+    public String toString(){
+        return dateTime + "\t" + tthread.getId() + "\t" + text; 
+    }
+    
 }

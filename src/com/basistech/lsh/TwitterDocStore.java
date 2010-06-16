@@ -112,13 +112,13 @@ public class TwitterDocStore {
         }catch(Exception e){
             throw new RuntimeException(e);
         }
+        String date=currTweet.substring(0,currTweet.indexOf("\t"));
         text=currTweet.substring(currTweet.indexOf("\t")+1);
         String user=text.substring(0,text.indexOf("\t"));
-        text=text.substring(text.indexOf("\t")+1);
-        //remove html tags
-        text = text.replaceAll("\\<.*?\\>", "");
-        text = text.trim();
-        Tweet theReturn = new Tweet(text,user, tfidf.computeFeatures(text));
+        text=text.substring(text.indexOf("\t")+1,text.lastIndexOf("\t"));
+        //remove url's
+        text=text.replaceAll("http://\\S*","");
+        Tweet theReturn = new Tweet(text,user, date, tfidf.computeFeatures(text));
         theReturn.setId(docno);
         List<String> topics = this.docTopics.get(docno);
         if(topics==null)

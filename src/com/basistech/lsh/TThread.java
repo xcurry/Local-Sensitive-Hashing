@@ -14,10 +14,13 @@ public class TThread {
     private double entropy;
     private static double LOG2=Math.log(2);
     private HashSet<String> users = new HashSet<String>();
+    private static int nextid=0;
+    private int id;
     
     public TThread(int startTweet){
         this.startTweet=startTweet;
-        
+        id=nextid;
+        nextid++;
     }
 
     public int getStartTweet() {
@@ -78,5 +81,11 @@ public class TThread {
         hasEntropy = true;
         return entropy;
     }
+
+    public int getId() {
+        return id;
+    }
+    
+    
     
 }
