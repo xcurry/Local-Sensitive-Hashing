@@ -21,6 +21,8 @@ public class TestTwitter {
         boolean printSummary=false;
         
         TwitterDocStore docs = new TwitterDocStore();
+        docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
+        //docs.addDirToIDF("C:\\cygwin\\home\\cdoersch\\data\\twitter\\idf",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
         //docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
@@ -35,11 +37,11 @@ public class TestTwitter {
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
         
-        int tweetsToProcess=nDocs;//5000000;
+        int tweetsToProcess=nDocs;//5000000;//
         
         
         int dimension=13;
-        int maxPerBucket = Math.max(2,(int)(.001*nDocs/Math.pow(2, dimension)));
+        int maxPerBucket = Math.max(2,(int)(.1*nDocs/Math.pow(2, dimension)));
         int nTables = (int)Math.ceil(
                                Math.log(.025)/
                       (Math.log(1-Math.pow(.8,(double)dimension/2))+
@@ -62,6 +64,7 @@ public class TestTwitter {
                 
                 if(docNo%10000==0){
                     System.out.println("Processing document "+docNo);
+                    System.out.flush();
                 }
                 
                 //don't process every document--there's too many
@@ -132,6 +135,9 @@ public class TestTwitter {
                 
                 if(printThreadMembership){
                     fw.println(currDoc);
+                    if(docNo%10000==0){
+                        fw.flush();
+                    }
                 }
                 docNo++;
                 

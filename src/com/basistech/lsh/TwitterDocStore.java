@@ -22,20 +22,61 @@ public class TwitterDocStore {
     BufferedReader currFileTweets;
     private TFIDF2 tfidf = new TFIDF2();
     private HashMap<String,List<String>> docTopics = new HashMap<String,List<String>>();
+    
+    private TwitterDocStore idfBuilder = null;
+    private boolean idfOnly=false;
+    private Tweet placeholder;
+    
     public TwitterDocStore(){
         //configure tokenizer
-        tfidf.setGiveProportions(false);
+        //tfidf.setGiveProportions(false);
     }
     
     public void enqueueDir(String dir, FilenameFilter filter){
         enqueueDir(new File(dir),filter);
     }
     
-    
     public void enqueueDir(File dir, FilenameFilter filter){
         List<File> tmplist = Arrays.asList(dir.listFiles(filter));
         Collections.sort(tmplist);
         fileList.addAll(tmplist);
+    }
+    
+    //bending over backwards a little bit to re-use the string parsing
+    //code.  We create a new document store whose sole purpose is to
+    //represent the documents added only to the IDF.  Then we let that
+    //document store build up its IDF by making it load all the documents
+    //in its directory.  Note that by calling setTFIDF(tfidf), we set the IDF-only
+    //document store's TFIDF to be the same object as this document store's 
+    //TFIDF, so the work it does loading the IDF documents will be reflected
+    //in this object.
+    public void addDirToIDF(String dir, FilenameFilter filter){
+        tfidf.setUseIDF(true);
+        if(idfBuilder==null){
+            idfBuilder = new TwitterDocStore();
+            idfBuilder.setIdfOnly();
+            idfBuilder.setTFIDF(tfidf);
+        }
+        idfBuilder.enqueueDir(dir, filter);
+        int ct=0;
+        while(idfBuilder.nextDoc()!=null){
+            ct++;
+            if(ct%100000==0){
+                System.out.print(".");
+                if(ct%5000000==0){
+                    System.out.println();
+                }
+            }
+        }
+    }
+    
+    private void setIdfOnly(){
+        idfOnly=true;
+        placeholder=new Tweet("","","",null);
+    }
+    
+    private void setTFIDF(TFIDF2 replacement){
+        tfidf=replacement;
     }
     
     public void loadDocTopics(String file){try{
@@ -115,15 +156,25 @@ public class TwitterDocStore {
         String date=currTweet.substring(0,currTweet.indexOf("\t"));
         text=currTweet.substring(currTweet.indexOf("\t")+1);
         String user=text.substring(0,text.indexOf("\t"));
-        text=text.substring(text.indexOf("\t")+1,text.lastIndexOf("\t"));
+        text=text.substring(text.indexOf("\t")+1);
+        if(text.contains("\t")){
+            text=text.substring(0,text.lastIndexOf("\t"));
+        }
         //remove url's
         text=text.replaceAll("http://\\S*","");
-        Tweet theReturn = new Tweet(text,user, date, tfidf.computeFeatures(text));
-        theReturn.setId(docno);
-        List<String> topics = this.docTopics.get(docno);
-        if(topics==null)
-            topics = new ArrayList<String>();
-        theReturn.setAnnotations(topics);
-        return theReturn;
+        if(idfOnly){
+            tfidf.addToIDF(text);
+            //since we're in IDF mode, the returned tweet won't actually be read.
+            //don't waste time building a new one.
+            return placeholder;
+        }else{
+            Tweet theReturn = new Tweet(text,user, date, tfidf.computeFeatures(text));
+            theReturn.setId(docno);
+            List<String> topics = this.docTopics.get(docno);
+            if(topics==null)
+                topics = new ArrayList<String>();
+            theReturn.setAnnotations(topics);
+            return theReturn;
+        }
     }
 }
