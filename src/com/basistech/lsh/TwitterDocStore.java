@@ -2,8 +2,11 @@ package com.basistech.lsh;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -109,8 +112,8 @@ public class TwitterDocStore {
             return docCount;
         }
         for(File f: fileList){
-            FileReader fr=new FileReader(f);
-            BufferedReader br = new BufferedReader(fr);
+            BufferedReader br = 
+                new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
             while(br.readLine()!=null){
                 docCount++;
                 if(docCount%100000==0){
