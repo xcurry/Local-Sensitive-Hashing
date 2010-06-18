@@ -1,8 +1,10 @@
 package com.basistech.lsh;
 
-import java.io.File;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -15,22 +17,24 @@ public class TestTwitter {
      */
     private static int recordingPeriod=100000;
     public static void main(String[] args) {
-        
-        File logFile = new File("/u1/fsd/data/twitter/threads2.log");
+        //String logFileName = "/u1/fsd/data/twitter/threads2.log";
+        String logFileName = "/Users/jwp/dev/data/twitter/threads2.log";
         boolean printThreadMembership=true;
         boolean printSummary=false;
         
         TwitterDocStore docs = new TwitterDocStore();
-        docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
+        //docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
         //docs.addDirToIDF("C:\\cygwin\\home\\cdoersch\\data\\twitter\\idf",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
         //docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
-        docs.enqueueDir("/u1/fsd/data/twitter/split",null);
+        //docs.enqueueDir("/u1/fsd/data/twitter/split",null);
+        docs.enqueueDir("/Users/jwp/dev/data/twitter/tiny",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
         //nDocs only affects the sizes of the buckets in the LSH.
-        int nDocs = 96378557;//docs.getDocCount();
+        //int nDocs = 96378557;//docs.getDocCount();
+        int nDocs = 100;//docs.getDocCount();
         
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
@@ -56,7 +60,9 @@ public class TestTwitter {
         ArrayList<Tweet> annotatedDocs = new ArrayList<Tweet>();
         try{
             //create log file
-            PrintStream fw=new PrintStream(logFile);
+            BufferedWriter fw = 
+                new BufferedWriter(new OutputStreamWriter
+                        (new FileOutputStream(logFileName), "UTF-8"));
             Document currDoc;
             int docNo=0;
             //loop through every tweet we have on file; currDoc is the current one.
@@ -134,7 +140,7 @@ public class TestTwitter {
                 }
                 
                 if(printThreadMembership){
-                    fw.println(currDoc);
+                    fw.write(currDoc.toString() + "\n");
                     if(docNo%10000==0){
                         fw.flush();
                     }
@@ -156,7 +162,8 @@ public class TestTwitter {
                 if(printSummary)
                     printThread(t.result,fw);
             }
-            
+            fw.flush();
+            fw.close();
         }catch(IOException e){throw new RuntimeException(e);}
         
         Collections.sort(annotatedDocs);
@@ -182,11 +189,11 @@ public class TestTwitter {
         return t.getAnnotations().get(0).equals("Event");
     }
     
-    public static void printThread(TThread res, PrintStream writer){
-        writer.println("----------Post Count:"+res.getCount()+"----------");
+    public static void printThread(TThread res, BufferedWriter writer) throws IOException{
+        writer.write("----------Post Count:"+res.getCount()+"----------\n");
         int i = 0;
         for(Tweet t: res.getTweets()){
-            writer.println(t.getText());
+            writer.write(t.getText() + "\n");
             i++;
             if(i==10){
                 break;
