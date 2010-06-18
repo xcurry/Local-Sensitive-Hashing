@@ -17,24 +17,20 @@ public class TestTwitter {
      */
     private static int recordingPeriod=100000;
     public static void main(String[] args) {
-        //String logFileName = "/u1/fsd/data/twitter/threads2.log";
-        String logFileName = "/Users/jwp/dev/data/twitter/threads2.log";
+        String logFileName = "/u1/fsd/data/twitter/threads2.log";
         boolean printThreadMembership=true;
         boolean printSummary=false;
         
         TwitterDocStore docs = new TwitterDocStore();
-        //docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
+        docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
         //docs.addDirToIDF("C:\\cygwin\\home\\cdoersch\\data\\twitter\\idf",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
-        //docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
-        //docs.enqueueDir("/u1/fsd/data/twitter/split",null);
-        docs.enqueueDir("/Users/jwp/dev/data/twitter/tiny",null);
+        docs.enqueueDir("/u1/fsd/data/twitter/split",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
         //nDocs only affects the sizes of the buckets in the LSH.
-        //int nDocs = 96378557;//docs.getDocCount();
-        int nDocs = 100;//docs.getDocCount();
+        int nDocs = 96378557;//docs.getDocCount();
         
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
