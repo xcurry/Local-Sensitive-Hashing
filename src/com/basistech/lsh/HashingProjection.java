@@ -1,18 +1,15 @@
 package com.basistech.lsh;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-
 public class HashingProjection {
-    private Sampler sampler;
-    private HashMap<Integer,Double> rep;
+    private double[] rep;
     private int modSize;
 
     public HashingProjection(Sampler sampler) {
-        this.sampler = sampler;
-        rep = new HashMap<Integer,Double>();
         modSize=700+sampler.getRandom().nextInt(200);
+        rep = new double[modSize];
+        for(int i=1; i<modSize; i++){
+            rep[i]=sampler.draw();
+        }
     }
 
     public boolean bitValue(FeatureVector featVec) {
@@ -20,11 +17,7 @@ public class HashingProjection {
         for (int featId : featVec.keySet()) {
             double featValue = featVec.get(featId);
             featId=featId%modSize;
-            Double coef=rep.get(featId);
-            if(coef==null){
-            	coef=sampler.draw();
-            	rep.put(featId, coef);
-            }
+            Double coef=rep[featId];
             dotProduct += featValue * coef;			
         }		
         return dotProduct > 0.0d;
@@ -32,10 +25,8 @@ public class HashingProjection {
 
     public String toString() {
         StringBuilder str = new StringBuilder();
-        ArrayList<Integer> al = new ArrayList<Integer>(rep.keySet());
-        Collections.sort(al);
-        for (Integer i: al) {
-            str.append(i + ":" + rep.get(i) + ";");
+        for (int i = 0; i<rep.length; i++) {
+            str.append(i + ":" + rep[i] + ";");
         }
         return str.toString();
     }	

@@ -24,9 +24,9 @@ public class TestTwitter {
         
         TwitterDocStore docs = new TwitterDocStore();
         docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
-        //docs.addDirToIDF("C:\\cygwin\\home\\cdoersch\\data\\twitter\\idf",null);
+        //docs.addDirToIDF("/home/cdoersch/data/twitter/idf",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
-        //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
+        //docs.enqueueDir("/home/cdoersch/data/twitter/split",null);
         //docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
         docs.enqueueDir("/u1/fsd/data/twitter/split",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
