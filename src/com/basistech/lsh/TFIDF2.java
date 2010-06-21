@@ -95,9 +95,9 @@ public class TFIDF2 {
                 Integer docCount = df.get(termId);
                 double dbDocCount=0;
                 if(docCount==null){
-                    dbDocCount=.5;
+                    dbDocCount=.5;//nDocs/(double)10000;
                 }else{
-                    dbDocCount=docCount;
+                    dbDocCount=docCount;//+nDocs/(double)10000;
                 }
                 double idf = LogN.value(nDocs) - Math.log(dbDocCount)/Math.log(2);
                 fv.put(termId, tf*idf);

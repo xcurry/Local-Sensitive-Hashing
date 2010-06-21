@@ -39,14 +39,14 @@ public class TestTwitter {
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
         
-        int tweetsToProcess=5000000;//nDocs;//
+        int tweetsToProcess=1000000;//nDocs;//
         
         //how far do we look when merging threads?
         int neighborhoodSize=1;
         double threshold=.500001;
         
         int dimension=13;
-        int maxPerBucket = Math.max(2,(int)(.001*nDocs/Math.pow(2, dimension)));
+        int maxPerBucket = Math.max(2,(int)(.1*nDocs/Math.pow(2, dimension)));
         int nTables = (int)Math.ceil(
                                Math.log(.025)/
                       (Math.log(1-Math.pow(.8,(double)dimension/2))+
