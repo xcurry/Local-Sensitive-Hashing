@@ -7,11 +7,14 @@ $entropy = 0;
 while (<STDIN>) {
   chomp;
   $line = $_;
-  ($date, $threadId, $text) = split(/\t/, $line);
+  ($date, $threadId, $user, $text) = split(/\t/, $line);
   next if ($text eq "");
   if ($threadId > $lastThreadId) {
     computeEntropy();
-    printThread();
+    if ($entropy > 3.5) {
+      printThread();
+    }
+    undef %users;
     undef @thread;
   }
 
@@ -21,6 +24,7 @@ while (<STDIN>) {
     ++$unigrams{$tok};
     ++$totalCount;
   }
+  ++$users{$user};
   push(@thread, $line);
   $lastThreadId = $threadId;
 }
@@ -33,7 +37,7 @@ if (scalar(@thread) > 0) {
 sub computeEntropy {
   $entropy = 0;
   foreach $tweet (@thread) {
-    local ($date, $threadId, $text) = split(/\t/, $tweet);
+    local ($date, $threadId, $user, $text) = split(/\t/, $tweet);
     $text = tokenize($text);
     @toks = split(/\s+/, $text);
     foreach $tok (@toks) {
@@ -47,11 +51,13 @@ sub computeEntropy {
 }
 
 sub printThread {
-  $size = scalar(@thread);
+  #$size = scalar(@thread);
+  $uniqUsers = scalar(keys(%users));
   $i = 0;
   foreach $tweet (@thread) {
     last if (++$i > 5);
-    print $entropy."\t".$size."\t".$tweet."\n";
+    #print $entropy."\t".$size."\t".$tweet."\n";
+    print $entropy."\t".$uniqUsers."\t".$tweet."\n";
   }
 }
 
