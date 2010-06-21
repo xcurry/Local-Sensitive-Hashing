@@ -10,6 +10,7 @@ public class Tweet implements Document, Comparable<Tweet>{
 	private TThread tthread = null;
 	private String user;
 	private String dateTime;
+	private int uid;
 
 	//public Document(FeatureVector features) {
 	//	super();
@@ -24,17 +25,22 @@ public class Tweet implements Document, Comparable<Tweet>{
 	//    }
 	//}
 	
-	public Tweet(String str, String user, String date, FeatureVector fv){
+	public Tweet(String str, String user, String date, int uid, FeatureVector fv){
 	    //text=str;
 	    features=fv;
 	    text=str;
 	    this.user=user;
 	    dateTime=date;
+	    this.uid=uid;
 	}
 
 	public TThread getTThread() {
         return tthread;
     }
+	
+	public int getUid(){
+	    return uid;
+	}
 
     public String getUser() {
         return user;

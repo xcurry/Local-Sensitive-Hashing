@@ -57,6 +57,7 @@ public class TFIDF2 {
             }
             df.put(termId, count + 1);
         }
+        nDocs=nDocs+1;
     }
 
     public TFPair computeTermFrequency(String str){
@@ -82,7 +83,6 @@ public class TFIDF2 {
         TFPair tfp = computeTermFrequency(f);
         int tfTotal = tfp.total;
         FeatureVector fv = new FeatureVector();
-        nDocs=nDocs+1;
         for (Entry<String, Integer> entry : tfp.tf.entrySet()) {
             String tok = entry.getKey();
             int termCount = entry.getValue();

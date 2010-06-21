@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
 
 public class TThread {
+    public static int recordingPeriod=100000;
+    
     private int count=0;
     private int startTweet;
     private List<Tweet> tweets = new ArrayList<Tweet>();
@@ -16,6 +17,7 @@ public class TThread {
     private HashSet<String> users = new HashSet<String>();
     private static int nextid=0;
     private int id;
+    private TThread parent=null;
     
     public TThread(int startTweet){
         this.startTweet=startTweet;
@@ -33,10 +35,21 @@ public class TThread {
             users.add(t.getUser());
         }
         tweets.add(t);
-        if(hasEntropy){
-            System.out.println("warning: invalidating entropy");
-        }
         hasEntropy=false;
+    }
+    
+    public void absorb(TThread other){
+        other.setParent(this);
+        for(Tweet t: other.getTweets()){
+            t.setTThread(this);
+            if(t.getUid()<startTweet+recordingPeriod){
+                addTweet(t);
+            }
+        }
+    }
+    
+    private void setParent(TThread parent){
+        this.parent=parent;
     }
 
     public List<Tweet> getTweets() {
@@ -86,6 +99,13 @@ public class TThread {
         return id;
     }
     
-    
+    public TThread getRoot(){
+        if(parent==null){
+            return this;
+        }else{
+            parent=parent.getRoot();
+            return parent;
+        }
+    }
     
 }

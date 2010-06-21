@@ -2,12 +2,14 @@ package com.basistech.lsh;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 
 /**
- * Keep track of the objects with the highest score.  
+ * Keep track of the objects with the highest score.
+ * Probably not efficient for large capacities.  
  * @author cdoersch
  *
  * @param <T>
@@ -27,7 +29,7 @@ public class ResultSet <T> {
 
     private int capacity;
     private PriorityQueue<ResultPair<T>> scoreCache;
-    private HashSet<T> currentContents = new HashSet<T>();
+    private HashMap<T,Double> currentContents = new HashMap<T,Double>();
     private static ScoreCompareDesc cmp;
 
     static {
@@ -40,8 +42,13 @@ public class ResultSet <T> {
     }
 
     public void add(T result, double score) {
-        if(currentContents.contains(result)){
-            return;
+        if(currentContents.containsKey(result)){
+            if(Double.valueOf(score).equals(currentContents.get(result))){
+                return;
+            }else{
+                currentContents.remove(result);
+                scoreCache.remove(result);
+            }
         }
         ResultPair<T> bot = scoreCache.peek();
         if (bot != null && score <= bot.score && scoreCache.size() == capacity) {
@@ -55,7 +62,7 @@ public class ResultSet <T> {
         }
         ResultPair<T> toadd = new ResultPair<T>(result, score);
         scoreCache.add(toadd);
-        currentContents.add(toadd.result);
+        currentContents.put(toadd.result,toadd.score);
     }
 
     public ResultPair<T> worst() {

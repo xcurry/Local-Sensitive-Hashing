@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -18,6 +18,7 @@ import java.util.List;
 
 public class TwitterDocStore {
     private List<File> fileList = new ArrayList<File>();
+    private int fileIdx=0;
     private int docCount;
     private boolean hasCount = false;
     private int nextToParse=0;
@@ -25,6 +26,7 @@ public class TwitterDocStore {
     BufferedReader currFileTweets;
     private TFIDF2 tfidf = new TFIDF2();
     private HashMap<String,List<String>> docTopics = new HashMap<String,List<String>>();
+    private int nextId=0;
     
     private TwitterDocStore idfBuilder = null;
     private boolean idfOnly=false;
@@ -75,7 +77,7 @@ public class TwitterDocStore {
     
     private void setIdfOnly(){
         idfOnly=true;
-        placeholder=new Tweet("","","",null);
+        placeholder=new Tweet("","","",-1,null);
     }
     
     private void setTFIDF(TFIDF2 replacement){
@@ -111,6 +113,7 @@ public class TwitterDocStore {
         if(hasCount){
             return docCount;
         }
+        docCount=1;
         for(File f: fileList){
             BufferedReader br = 
                 new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
@@ -131,6 +134,8 @@ public class TwitterDocStore {
     
     public Tweet nextDoc(){
         String text = null;
+        String date = null;
+        String user = null;
         String docno = null;
         String currTweet=null;
         try{
@@ -143,6 +148,7 @@ public class TwitterDocStore {
                     FileReader fr = new FileReader(fileList.get(nextToParse));
                     currFileTweets=new BufferedReader(fr);
                     nextToParse++;
+                    fileIdx=0;
                 }
                 
                 //if there are non-ascii characters, throw out this tweet
@@ -152,26 +158,39 @@ public class TwitterDocStore {
                 }catch(Exception e){
                     currTweet=null;
                 }
+                if(currTweet==null){
+                    continue;
+                }
+                try{
+                    date=currTweet.substring(0,currTweet.indexOf("\t"));
+                    text=currTweet.substring(currTweet.indexOf("\t")+1);
+                    user=text.substring(0,text.indexOf("\t"));
+                    text=text.substring(text.indexOf("\t")+1);
+                    if(text.contains("\t")){
+                        text=text.substring(0,text.lastIndexOf("\t"));
+                    }
+                    //remove url's
+                    text=text.replaceAll("http://\\S*","");
+                }catch(Exception e){
+                    System.out.println("unable to parse tweet! Offending line:\n"+currTweet);
+                    System.out.println("Line:"+fileIdx);
+                    System.out.println("File:"+fileList.get(nextToParse-1).getAbsolutePath());
+                    e.printStackTrace();
+                    currTweet=null;
+                }
             }while(currTweet==null);
         }catch(Exception e){
             throw new RuntimeException(e);
         }
-        String date=currTweet.substring(0,currTweet.indexOf("\t"));
-        text=currTweet.substring(currTweet.indexOf("\t")+1);
-        String user=text.substring(0,text.indexOf("\t"));
-        text=text.substring(text.indexOf("\t")+1);
-        if(text.contains("\t")){
-            text=text.substring(0,text.lastIndexOf("\t"));
-        }
-        //remove url's
-        text=text.replaceAll("http://\\S*","");
+        
         if(idfOnly){
             tfidf.addToIDF(text);
             //since we're in IDF mode, the returned tweet won't actually be read.
             //don't waste time building a new one.
             return placeholder;
         }else{
-            Tweet theReturn = new Tweet(text,user, date, tfidf.computeFeatures(text));
+            Tweet theReturn = new Tweet(text,user, date, nextId, tfidf.computeFeatures(text));
+            nextId++;
             theReturn.setId(docno);
             List<String> topics = this.docTopics.get(docno);
             if(topics==null)

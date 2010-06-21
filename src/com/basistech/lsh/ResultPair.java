@@ -11,4 +11,12 @@ public class ResultPair<T> {
     public String toString() {
         return "(" + result.toString() + "," + score + ")";        
     }
+    
+    public int hashCode(){
+        return result.hashCode();
+    }
+    
+    public boolean equals(Object other){
+        return (other instanceof ResultPair<?>) && result.equals(((ResultPair<?>)other).result);
+    }
 }

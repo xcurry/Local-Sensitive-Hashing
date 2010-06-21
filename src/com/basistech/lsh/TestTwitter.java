@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,33 +16,37 @@ public class TestTwitter {
     /**
      * @param args
      */
-    private static int recordingPeriod=100000;
     public static void main(String[] args) {
-        String logFileName = "/u1/fsd/data/twitter/threads2.log";
-        boolean printThreadMembership=true;
-        boolean printSummary=false;
+        
+        String logFileName = "/u1/fsd/data/twitter/threads.log";
+        boolean printThreadMembership=false;
+        boolean printSummary=true;
         
         TwitterDocStore docs = new TwitterDocStore();
         docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
         //docs.addDirToIDF("C:\\cygwin\\home\\cdoersch\\data\\twitter\\idf",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\twitter\\split",null);
+        //docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
         docs.enqueueDir("/u1/fsd/data/twitter/split",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
         //nDocs only affects the sizes of the buckets in the LSH.
-        int nDocs = 96378557;//docs.getDocCount();
+        int nDocs = 96378531;//docs.getDocCount();
         
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
         
-        int tweetsToProcess=nDocs;//5000000;//
+        int tweetsToProcess=5000000;//nDocs;//
         
+        //how far do we look when merging threads?
+        int neighborhoodSize=1;
+        double threshold=.500001;
         
         int dimension=13;
-        int maxPerBucket = Math.max(2,(int)(.1*nDocs/Math.pow(2, dimension)));
+        int maxPerBucket = Math.max(2,(int)(.001*nDocs/Math.pow(2, dimension)));
         int nTables = (int)Math.ceil(
                                Math.log(.025)/
                       (Math.log(1-Math.pow(.8,(double)dimension/2))+
@@ -59,35 +64,38 @@ public class TestTwitter {
             BufferedWriter fw = 
                 new BufferedWriter(new OutputStreamWriter
                         (new FileOutputStream(logFileName), "UTF-8"));
-            Document currDoc;
-            int docNo=0;
+            //PrintStream fw=System.out;//new PrintStream(logFile);
+            //if(false){throw new IOException();}
+            Tweet currDoc;
             //loop through every tweet we have on file; currDoc is the current one.
             while((currDoc = docs.nextDoc())!=null){
                 
-                if(docNo%10000==0){
-                    System.out.println("Processing document "+docNo);
+                if(currDoc.getUid()%10000==0){
+                    System.out.println("Processing document "+currDoc.getUid());
                     System.out.flush();
                 }
                 
                 //don't process every document--there's too many
                 //note that we may run out of tweets before docNo reaches 
                 //nDocs, because not all tweets in the files are actually returned.
-                if(docNo>=tweetsToProcess){
+                if(currDoc.getUid()>=tweetsToProcess){
                     break;
                 }
                 
                 //use the lsh to find documents similar to currDoc 
-                ResultSet<Document> res = lsh.search(currDoc, 1);
+                ResultSet<Document> res = lsh.search(currDoc, neighborhoodSize);
                 List<ResultPair<Document>> resultList = res.popResults();
                 TThread toAddTo;
+                boolean toAddToIsOld=false;
                 
                 //if there were collisions in the LSH
                 if(resultList.size()>0){
                     ResultPair<Document> bestDoc=resultList.get(0);
-                    if(bestDoc.score>.500001){
+                    if(bestDoc.score>threshold){
                         //Now we're certain we have found a document with high cosine similarity. 
                         //Its thread is the one we'll modify
                         toAddTo=((Tweet)bestDoc.result).getTThread();
+                        toAddToIsOld=true;
                         
                         //fw.println("old:"+bestDoc.score);
                         //if(bestDoc.score>.9){
@@ -99,12 +107,12 @@ public class TestTwitter {
                         //we found other tweets, but they were too far in cosine distance.
                         //we'll start a new thread
                         //fw.println("new:"+bestDoc.score);
-                        toAddTo=new TThread(docNo);
+                        toAddTo=new TThread(currDoc.getUid());
                     }
                 }else{
                     //we didn't collide with any documents, start a new thread
                     //fw.println("new:N/A");
-                    toAddTo=new TThread(docNo);
+                    toAddTo=new TThread(currDoc.getUid());
                 }
                 ((Tweet)currDoc).setTThread(toAddTo);
                 
@@ -112,8 +120,32 @@ public class TestTwitter {
                 //thread's recording period, because at the end of the day
                 //we care only about the thread's growth near the beginning
                 //of its existence.
-                if(docNo-toAddTo.getStartTweet()<=recordingPeriod){
+                if(currDoc.getUid()-toAddTo.getStartTweet()<=TThread.recordingPeriod){
                     toAddTo.addTweet((Tweet)currDoc);
+                }
+                
+                //if currDoc is close to documents in other threads, merge 
+                //the threads.  Note that this may change the "growth rate"
+                //of a thread even after its TThread.recordingPeriod is over--that's
+                //why we add everything to the oldest version of the thread,
+                //and then re-add the oldest version to recentThreads (described
+                //next)
+                if(toAddToIsOld){
+                    for(int i=1; i<resultList.size(); i++){
+                        if(resultList.get(i).score<threshold){
+                            break;
+                        }
+                        TThread other = ((Tweet)resultList.get(i).result).getTThread();
+                        if(other==toAddTo){
+                            continue;
+                        }
+                        if(other.getStartTweet()<toAddTo.getStartTweet()){
+                            TThread tmp=other;
+                            other=toAddTo;
+                            toAddTo=tmp;
+                        }
+                        toAddTo.absorb(other);
+                    }
                 }
                 
                 //we won't actually know whether to add this thread to the result
@@ -121,10 +153,10 @@ public class TestTwitter {
                 //add it to a queue to be processed later.
                 recentThreads.offer(toAddTo);
                 
-                //if there's threads added to recentThreads whose recordingPeriod's
-                //are guaranteed to be over (they've been in there for recordingPeriod
+                //if there's threads added to recentThreads whose TThread.recordingPeriod's
+                //are guaranteed to be over (they've been in there for TThread.recordingPeriod
                 //posts), then add them to the results if they're interesting enough
-                if(recentThreads.size()>recordingPeriod){
+                if(recentThreads.size()>TThread.recordingPeriod){
                     TThread judged = recentThreads.poll();
                     addThreadIfEvent(judged,fastestThreads);
                 }
@@ -137,11 +169,10 @@ public class TestTwitter {
                 
                 if(printThreadMembership){
                     fw.write(currDoc.toString() + "\n");
-                    if(docNo%10000==0){
+                    if(currDoc.getUid()%10000==0){
                         fw.flush();
                     }
                 }
-                docNo++;
                 
             }
         
@@ -199,7 +230,8 @@ public class TestTwitter {
     
     public static void addThreadIfEvent(TThread t, ResultSet<TThread> fastestThreads){
         //System.out.println(t.getEntropy());
-        if(t.getEntropy()>3.5 && t.getStartTweet()>recordingPeriod){
+        t=t.getRoot();
+        if(t.getEntropy()>3.5 && t.getStartTweet()>TThread.recordingPeriod){
             fastestThreads.add(t,t.getCount());
         }
     }
