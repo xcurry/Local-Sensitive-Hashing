@@ -91,6 +91,17 @@ public class HMM {
             }
             return false;
         }
+        public void reset() {
+            reset(length);
+        }
+        public void reset(int len) {
+            // reset only up to len
+            for (int i = 0; i < len; ++i) {
+                for (int j = 0; j < height; ++j) {
+                    rep[i][j] = 0.0d;
+                }
+            }            
+        }
         public String toString() {
             String s = new String();
             if (rep != null) {
@@ -115,7 +126,7 @@ public class HMM {
     private Trellis beta;
     private static Random rng;
     static {
-        rng = new Random(5); 
+        rng = new Random(3); 
     }
 
     public HMM(int nStates, Set<String> observations) {
@@ -184,12 +195,47 @@ public class HMM {
         }
         double totalAlpha = 0.0d;
         for (State s : states) {
-            int i = s.id;
-            totalAlpha += alpha.get(time, i);
+            totalAlpha += alpha.get(time, s.id);
         }
         return totalAlpha;
     }
 
+    public double backward(List<String> obs) {
+        int obsLength = obs.size();
+        beta.extend(obsLength);
+        int time = obsLength;
+        int lastTime = obsLength - 1;
+        for (String sym : obs) {
+            --time;
+            // initalization
+            if (time == lastTime) {
+                for (State s : states) {
+                    double obsP = s.getProb(sym);
+                    beta.put(time, s.id, obsP);
+                }
+                continue;
+            }
+            // induction
+            for (State currentState : states) {
+                int current = currentState.id;
+                double incomingBeta = 0.0d;
+                for (int next = 0; next < nStates; ++next) {
+                    double transP = transitions[current][next];
+                    incomingBeta += transP * beta.get(time + 1, next);
+                }
+                double obsP = currentState.getProb(sym);
+                beta.put(time, current, obsP * incomingBeta);
+            }        
+        }
+        double totalBeta = 0.0d;
+        for (State s : states) {
+            totalBeta += beta.get(time, s.id);
+        }
+        return totalBeta;
+    }
+    
+    
+    
     public String toString() {
         String s = "States:\n" + states.toString() + "\n";
         s += "Transitions:\n";
@@ -218,9 +264,10 @@ public class HMM {
         //h.printAB();
         //System.out.println("=== resize ===");
         double totalAlpha = h.forward(obs);
-        h.printAB();
         System.out.println("* a_tot = " + totalAlpha);
-    
+        double totalBeta = h.backward(obs);
+        System.out.println("* b_tot = " + totalBeta);
+        h.printAB();
     }
 
     public static void main(String[] args) {
