@@ -1,273 +1,236 @@
 package com.basistech.lsh;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import java.util.Map.Entry;
 
 public class HMM {
-    public class State {
-        // TODO: switch to log math
-        private Map<String, Double> observations;
-        public int id;
-        public State(int id) {
-            observations = new HashMap<String, Double>();
-            this.id = id;
-        }
-        public State(int id, Set<String> syms) {
-            this(id);
-            for (String sym : syms) {
-                // TODO: good dist?
-                addSymbol(sym, Math.abs(rng.nextInt() % 4) + 1);                
-            }
-            normalize();
-        }
-
-        public double getProb(String sym) {
-            Double p = observations.get(sym);
-            if (p == null) {
-                return 0.0d;
-            }
-            return p;
-        }
-
-        public void normalize() {
-            double sum = 0.0d;
-            for (double v : observations.values()) {
-                sum += v;
-            }
-            for (Entry<String, Double> e : observations.entrySet()) {
-                e.setValue(e.getValue() / sum);
-            }
-        }
-
-        public void addSymbol(String sym, double prob) {
-            observations.put(sym, prob);            
-        }         
-
-        public String toString() {
-            String s = id + " = {";
-            for (Entry<String, Double> e : observations.entrySet()) {
-                s += e.getKey() + " " + String.format("%.4f, ", e.getValue());
-            }            
-            s += "}";
-            return s;
-        }
-    }
-
-    public class Trellis {
-        public Trellis(int length, int height) {
-            this.length = length;
-            this.height = height;
-            rep = new double[length][height];
-        }
-        public void extend(int length) {
-            if (this.length >= length) {
-                return;
-            }
-            int prevLength = rep.length;
-            rep = Arrays.copyOf(rep, length);
-            for (int i = prevLength; i < length; ++i) {
-                rep[i] = new double[height];
-            }
-            this.length = length;
-        } 
-        public double get(int row, int col) {
-            if (row < length && col < height) {
-                return rep[row][col];
-            }
-            return 0.0d;
-        }
-        public boolean put(int row, int col, double value) {
-            if (row < length && col < height) {
-                rep[row][col] = value;
-                return true;
-            }
-            return false;
-        }
-        public void reset() {
-            reset(length);
-        }
-        public void reset(int len) {
-            // reset only up to len
-            for (int i = 0; i < len; ++i) {
-                for (int j = 0; j < height; ++j) {
-                    rep[i][j] = 0.0d;
-                }
-            }            
-        }
-        public String toString() {
-            String s = new String();
-            if (rep != null) {
-                for (int state = height - 1; state > -1; --state) {
-                    for (int time = 0; time < length; ++time) {
-                        s += String.format("%.4f", rep[time][state]) + " ";
-                    }
-                    s += "\n";
-                }
-            }            
-            return s;
-        }
-        public int length;
-        public int height;
-        public double[][] rep;
-    }
-    
-    private double[][] transitions;
-    private List<State> states;
-    private int nStates;
-    private Trellis alpha;
-    private Trellis beta;
     private static Random rng;
     static {
-        rng = new Random(3); 
+        rng = new Random(2);
+    }
+    private int totalStates;
+    private int totalObservations;
+    private double[][] states;
+    private double[][] transitions;
+    private double[][] alpha;
+    private double[][] beta;
+    private double[][] transCount;
+    private double[][] obsCount;
+
+    public HMM(int nStates, int nObservations) {
+        this.totalStates = nStates;
+        this.totalObservations = nObservations;
+        init();
+    }
+    
+    private void init() {
+        initializeStates();
+        initializeTransitions(); 
+        extendTrellis(5);
+        initializeAccumulators();        
     }
 
-    public HMM(int nStates, Set<String> observations) {
-        initializeTransitions(nStates);
-        initializeStates(nStates, observations);
-        int nObs = observations.size();
-        this.nStates = nStates; 
-        alpha = new Trellis(5, nObs);
-        beta = new Trellis(5, nObs);
-    }
-
-    private void initializeStates(int nStates, Set<String> observations) {
-        states = new ArrayList<State>();
-        for (int i = 0; i < nStates; ++i) {
-            State s = new State(i, observations);
-            states.add(s);
+    private void initializeStates() {
+        states = new double[totalStates][totalObservations];
+        for (int i = 0; i < totalStates; ++i) {
+            double total = 0.0d;
+            for (int j = 0; j < totalObservations; ++j) {
+                int v = Math.abs(rng.nextInt() % 4) + 1; 
+                states[i][j] = v;
+                total += v;
+            }
+            for (int j = 0; j < totalObservations; ++j) {
+                states[i][j] /= total;
+            }
         }
     }
 
-    private void initializeTransitions(int nStates) {
-        transitions = new double[nStates][nStates];
-        for (int i = 0; i < nStates; ++i) {
-            double sum = 0.0d;
-            for (int j = 0; j < nStates; ++j) {
+    private void initializeTransitions() {
+        transitions = new double[totalStates][totalStates];
+        for (int i = 0; i < totalStates; ++i) {
+            double total = 0.0d;
+            for (int j = 0; j < totalStates; ++j) {
                 // TODO: good dist?
                 int v = Math.abs(rng.nextInt() % 4) + 1; 
                 transitions[i][j] = v;
-                sum += v;
+                total += v;
             }
-            for (int j = 0; j < nStates; ++j) {
-                transitions[i][j] /= sum;   
+            for (int j = 0; j < totalStates; ++j) {
+                transitions[i][j] /= total;   
             }
         }
     }
 
-    private void printAB() {
-        System.out.println("a:\n" + alpha);
-        System.out.println("b:\n" + beta);
-    }
-    
-    public double forward(List<String> obs) {
-        int obsLength = obs.size();
-        alpha.extend(obsLength);
-        int time = -1;
-        for (String sym : obs) {
-            ++time;
-            // initalization
-            if (time == 0) {
-                for (State s : states) {
-                    double obsP = s.getProb(sym);
-                    alpha.put(time, s.id, obsP);
-                }
-                continue;
+    private void extendTrellis(int length) {
+        if (alpha == null) {
+            alpha = new double[length][totalStates];
+            beta = new double[length][totalStates];  
+        } else if (alpha.length >= length) {
+            return;
+        } else {
+            int prevLength = alpha.length;
+            alpha = Arrays.copyOf(alpha, length);
+            beta = Arrays.copyOf(beta, length);
+            for (int i = prevLength; i < length; ++i) {
+                alpha[i] = new double[totalStates];
             }
-            // induction
-            for (State currentState : states) {
-                int current = currentState.id;
-                double incomingAlpha = 0.0d;
-                for (int previous = 0; previous < nStates; ++previous) {
-                    double transP = transitions[previous][current];
-                    incomingAlpha += transP * alpha.get(time - 1, previous);
+        }
+    }
+
+    private void initializeAccumulators() {     
+        transCount = new double[totalStates][totalStates];
+        obsCount = new double[totalStates][totalObservations];
+    }
+
+    private double forward(int[] obsSeq) {
+        int obsLength = obsSeq.length;
+        extendTrellis(obsLength);
+        int time = 0;
+        int sym = obsSeq[0];
+        for (int i = 0; i < totalStates; ++i) {
+            alpha[time][i] = states[i][sym];
+        }
+        ++time;
+        for (; time < obsLength; ++time) {
+            sym = obsSeq[time];
+            for (int j = 0; j < totalStates; ++j) {
+                double alphaAcc = 0.0d;
+                for (int i = 0; i < totalStates; ++i) {
+                    alphaAcc += alpha[time - 1][i] * transitions[i][j]; 
                 }
-                double obsP = currentState.getProb(sym);
-                alpha.put(time, current, obsP * incomingAlpha);
+                alpha[time][j] = alphaAcc * states[j][sym];
             }
         }
         double totalAlpha = 0.0d;
-        for (State s : states) {
-            totalAlpha += alpha.get(time, s.id);
+        for (int i = 0; i < totalStates; ++i) {
+            totalAlpha += alpha[time - 1][i];
         }
         return totalAlpha;
     }
 
-    public double backward(List<String> obs) {
-        int obsLength = obs.size();
-        beta.extend(obsLength);
-        int time = obsLength;
-        int lastTime = obsLength - 1;
-        for (String sym : obs) {
-            --time;
-            // initalization
-            if (time == lastTime) {
-                for (State s : states) {
-                    double obsP = s.getProb(sym);
-                    beta.put(time, s.id, obsP);
+    private double backward(int[] obsSeq) {
+        int obsLength = obsSeq.length;
+        extendTrellis(obsLength);
+        int time = obsLength - 1;
+        for (int i = 0; i < totalStates; ++i) {
+            beta[time][i] = 1;
+        }
+        --time;
+        for (; time > -1; --time) {
+            for (int i = 0; i < totalStates; ++i) {
+                double betaAcc = 0.0d;
+                for (int j = 0; j < totalStates; ++j) {
+                    betaAcc += beta[time + 1][j] * states[j][obsSeq[time + 1]] * transitions[i][j];
                 }
-                continue;
+                beta[time][i] = betaAcc;
             }
-            // induction
-            for (State currentState : states) {
-                int current = currentState.id;
-                double incomingBeta = 0.0d;
-                for (int next = 0; next < nStates; ++next) {
-                    double transP = transitions[current][next];
-                    incomingBeta += transP * beta.get(time + 1, next);
-                }
-                double obsP = currentState.getProb(sym);
-                beta.put(time, current, obsP * incomingBeta);
-            }        
         }
         double totalBeta = 0.0d;
-        for (State s : states) {
-            totalBeta += beta.get(time, s.id);
+        for (int i = 0; i < totalStates; ++i) {
+            beta[0][i] *= states[i][obsSeq[0]];
+            totalBeta += beta[0][i];
         }
         return totalBeta;
     }
+
+
+    public void EStep(int[] obsSeq) {
+        forward(obsSeq);
+        backward(obsSeq);
+        for (int time = 0; time < obsSeq.length; ++time) {
+            int sym = obsSeq[time];
+            for (int i = 0; i < totalStates; ++i) {
+                double curAlpha = alpha[time][i];
+                for (int j = 0; j < totalStates; ++j) {
+                    double v = curAlpha * beta[time][j];
+                    transCount[i][j] += v;
+                    obsCount[i][sym] += v;
+                }
+            }
+        }
+    }
+
+    public void MStep() {
+        for (int i = 0; i < totalStates; ++i) {
+            double obsTotal = 0.0d;
+            for (int sym = 0; sym < totalObservations; ++sym){
+                obsTotal += obsCount[i][sym];
+            }
+            for (int sym = 0; sym < totalObservations; ++sym){
+                states[i][sym] = obsCount[i][sym] / obsTotal;
+            }
+            
+            double transTotal = 0.0d;
+            for (int j = 0; j < totalStates; ++j) {
+                transTotal += transCount[i][j];
+            }
+            for (int j = 0; j < totalStates; ++j) {
+                transitions[i][j] = transCount[i][j] / transTotal;
+            }
+        }
+        resetAccumulators();
+    }
     
-    
-    
+    private void resetAccumulators() {
+        for (int i = 0; i < totalStates; ++i) {
+            for (int j = 0; j < totalStates; ++j) {
+                transCount[i][j] = 0.0d;
+            }   
+            for (int sym = 0; sym < totalObservations; ++sym) {
+                obsCount[i][sym] = 0.0d;
+            }
+        }
+    }
+
     public String toString() {
-        String s = "States:\n" + states.toString() + "\n";
+        String s = "States:\n";
+        for (int i = 0; i < totalStates; ++i) {
+            s += i + ": ";
+            for (int sym = 0; sym < totalObservations; ++sym) {
+                s += String.format( "%d %.4f, ", sym, states[i][sym]);
+            }
+            s += "\n";            
+        }
         s += "Transitions:\n";
-        int nStates = states.size();
-        for (int i = 0; i < nStates; ++i) {
-            for (int j = 0; j < nStates; ++j) {
-                s += String.format("%.4f", transitions[i][j]) + " ";
+        for (int i = 0; i < totalStates; ++i) {
+            for (int j = 0; j < totalStates; ++j) {
+                s += String.format("%.4f ", transitions[i][j]);
             }
             s += "\n";
         }
+        s += "Alpha:\n"; 
+        for (int i = 0; i < alpha.length; ++i) {
+            for (int j = 0; j < totalStates; ++j) {
+                s += String.format("%.4f ", alpha[i][j]);
+            }
+            s += "\n";
+        }
+        s += "Beta:\n"; 
+        for (int i = 0; i < beta.length; ++i) {
+            for (int j = 0; j < totalStates; ++j) {
+                s += String.format("%.4f ", beta[i][j]);
+            }
+            s += "\n";
+        }        
         return s;
     }
 
     public static void test() {
-        Set<String> obsSyms = new HashSet<String>();
-        obsSyms.add("a");
-        obsSyms.add("b");
-        obsSyms.add("c");
-        HMM h = new HMM(3, obsSyms);
-        System.out.println(h.toString());
-
-        List<String> obs = new LinkedList<String>();
-        obs.add("b");
-        obs.add("b");
-        obs.add("c");
-        //h.printAB();
-        //System.out.println("=== resize ===");
-        double totalAlpha = h.forward(obs);
+        int[] obsSeq1 = {1, 1, 2};
+        int[] obsSeq2 = {0, 0, 1};
+        HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
+        double totalAlpha = h.forward(obsSeq1);
+        double totalBeta = h.backward(obsSeq1);
         System.out.println("* a_tot = " + totalAlpha);
-        double totalBeta = h.backward(obs);
         System.out.println("* b_tot = " + totalBeta);
-        h.printAB();
+        System.out.println(h.toString());
+        for (int i = 0; i < 3; ++i) {
+            h.EStep(obsSeq1);
+            h.EStep(obsSeq2);
+            h.MStep();    
+            System.out.println("=== m-step ===");
+            System.out.println(h.toString());
+        }           
     }
 
     public static void main(String[] args) {
