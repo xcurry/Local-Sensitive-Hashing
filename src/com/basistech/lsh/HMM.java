@@ -6,7 +6,7 @@ import java.util.Random;
 public class HMM {
     private static Random rng;
     static {
-        rng = new Random(2);
+        rng = new Random();
     }
     private int totalStates;
     private int totalObservations;
@@ -159,7 +159,7 @@ public class HMM {
         backward(obsSeq);
         double[][]tempTransCount = new double[totalStates][totalStates];
         for (int time = 0; time < obsSeq.length-1; ++time) {
-            int sym = obsSeq[time];
+            int sym = obsSeq[time+1];
             double totalTransCount=0;
             for (int i = 0; i < totalStates; ++i) {
                 double curAlpha = alpha[time][i];
@@ -220,22 +220,7 @@ public class HMM {
     }
 
     public String toString() {
-        String s = "States:\n";
-        for (int i = 0; i < totalStates; ++i) {
-            s += i + ": ";
-            for (int sym = 0; sym < totalObservations; ++sym) {
-                s += String.format( "%d %.4f, ", sym, states[i][sym]);
-            }
-            s += "\n";            
-        }
-        s += "Transitions:\n";
-        for (int i = 0; i < totalStates; ++i) {
-            for (int j = 0; j < totalStates; ++j) {
-                s += String.format("%.4f ", transitions[i][j]);
-            }
-            s += "\n";
-        }
-        s += "Alpha:\n"; 
+        String s = "Alpha:\n";
         for (int i = 0; i < alpha.length; ++i) {
             for (int j = 0; j < totalStates; ++j) {
                 s += String.format("%.4f ", alpha[i][j]);
@@ -248,17 +233,32 @@ public class HMM {
                 s += String.format("%.4f ", beta[i][j]);
             }
             s += "\n";
-        }        
+        }
+        s += "States:\n";
+        for (int i = 0; i < totalStates; ++i) {
+            s += i + ": ";
+            for (int sym = 0; sym < totalObservations; ++sym) {
+                s += String.format( "%d %.4f, ", sym, states[i][sym]);
+            }
+            s += "\n";
+        }
+        s += "Transitions:\n";
+        for (int i = 0; i < totalStates; ++i) {
+            for (int j = 0; j < totalStates; ++j) {
+                s += String.format("%.4f ", transitions[i][j]);
+            }
+            s += "\n";
+        }
         return s;
     }
 
     public static void test() {
-        int[] obsSeq1 = {1, 1, 2, 1, 1, 2, 1};
-        int[] obsSeq2 = {0, 1, 1, 1, 2, 0, 1};
+        int[] obsSeq1 = {1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
+        int[] obsSeq2 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};
         HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
         h.checkFB(obsSeq1);
         System.out.println(h.toString());
-        for (int i = 0; i < 20; ++i) {
+        for (int i = 0; i < 200; ++i) {
             h.EStep(obsSeq1);
             h.EStep(obsSeq2);
             h.MStep();    
