@@ -118,17 +118,17 @@ public class Test {
     
     
     public static void testCosineSimilarity() {
-        Map<String, Double> fv1 = new HashMap<String, Double>();
-        Map<String, Double> fv2 = new HashMap<String, Double>();
+        FeatureVector fv1 = new FeatureVector();
+        FeatureVector fv2 = new FeatureVector();
         
-        fv1.put("hi", 0.5);
-        fv1.put("bye", 0.5);
-        fv2.put("hi", 1.0);
-        fv2.put("bye", 0.45);
+        fv1.put(1, 0.5);
+        fv1.put(2, 0.5);
+        fv2.put(1, 1.0);
+        fv2.put(2, 0.45);
         assert(Math.abs(CosineSimilarity.value(fv1, fv2) - 0.934d) < 0.001);    
-        fv2.put("hi", 0.55);        
+        fv2.put(1, 0.55);
         assert(Math.abs(CosineSimilarity.value(fv1, fv2) - 0.995d) < 0.001);
-        fv2.put("thing",50.0);
+        fv2.put(3,50.0);
         assert(Math.abs(CosineSimilarity.value(fv1, fv2) - 0.014d) < 0.001);
         System.out.println("CosineDistance");        
     }

@@ -41,7 +41,6 @@ public class TThread {
     public void absorb(TThread other){
         other.setParent(this);
         for(Tweet t: other.getTweets()){
-            t.setTThread(this);
             if(t.getUid()<startTweet+recordingPeriod){
                 addTweet(t);
             }
@@ -52,6 +51,7 @@ public class TThread {
         this.parent=parent;
     }
 
+    //unsorted
     public List<Tweet> getTweets() {
         return tweets;
     }
@@ -77,9 +77,10 @@ public class TThread {
                 ++totalCount;
             }
         }
+        entropy=0;
         for (int count : unigramCount.values()) {
             double p = count / totalCount;
-            entropy -= p * Math.log(p);            
+           entropy -= p * Math.log(p);
         }
 //        FeatureVector fv = new FeatureVector();
 //        double total=0;

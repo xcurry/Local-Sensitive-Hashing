@@ -42,12 +42,14 @@ public class ResultSet <T> {
     }
 
     public void add(T result, double score) {
+        ResultPair<T> toadd = new ResultPair<T>(result, score);
         if(currentContents.containsKey(result)){
             if(Double.valueOf(score).equals(currentContents.get(result))){
                 return;
             }else{
                 currentContents.remove(result);
-                scoreCache.remove(result);
+                //ResultPair's are equal if their results are equal
+                scoreCache.remove(toadd);
             }
         }
         ResultPair<T> bot = scoreCache.peek();
@@ -55,12 +57,11 @@ public class ResultSet <T> {
             return;
         }
         if(result instanceof TThread){
-            System.out.println("added tthread with entropy "+((TThread)result).getEntropy());
+            System.out.println("added tthread with entropy "+((TThread)result).getEntropy()+" and count "+((TThread)result).getCount());
         }
         if(scoreCache.size()==capacity){
             currentContents.remove(scoreCache.poll().result);
         }
-        ResultPair<T> toadd = new ResultPair<T>(result, score);
         scoreCache.add(toadd);
         currentContents.put(toadd.result,toadd.score);
     }

@@ -7,6 +7,8 @@ import java.util.Set;
 
 public class FeatureVector implements Map<Integer, Double>{
     private HashMap<Integer, Double> rep;
+    private double norm;
+    private boolean hasNorm=false;
 
     public FeatureVector() {
         rep = new HashMap<Integer, Double>();
@@ -82,14 +84,17 @@ public class FeatureVector implements Map<Integer, Double>{
     }
 
     public Double put(Integer key, Double value) {
+        hasNorm=false;
         return rep.put(key, value);
     }
 
     public void putAll(Map<? extends Integer, ? extends Double> m) {
+        hasNorm=false;
         rep.putAll(m);
     }
 
     public Double remove(Object key) {
+        hasNorm=false;
         return rep.remove(key);
     }
 
@@ -106,6 +111,7 @@ public class FeatureVector implements Map<Integer, Double>{
     }
     
     public double merge(FeatureVector other){
+        hasNorm=false;
         // word counts for this & other        
         double total=0.0;
         for(Integer id:other.keySet()){
@@ -118,5 +124,18 @@ public class FeatureVector implements Map<Integer, Double>{
             rep.put(id,count+toadd);
         }
         return total;
+    }
+
+    public double getNorm() {
+        if(hasNorm){
+            return norm;
+        }
+        norm = 0.0d;
+        for (Double v : rep.values()) {
+            norm += v * v;
+        }
+        norm=Math.sqrt(norm);
+        hasNorm=true;
+        return norm;
     }
 }

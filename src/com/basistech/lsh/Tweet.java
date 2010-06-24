@@ -2,52 +2,51 @@ package com.basistech.lsh;
 
 import java.util.List;
 
-public class Tweet implements Document, Comparable<Tweet>{
-	private FeatureVector features;
-	private String text;
-	private String id;
-	private List<String> topics;
-	private TThread tthread = null;
-	private String user;
-	private String dateTime;
-	private int uid;
+public class Tweet implements Document, Comparable<Tweet> {
 
-	//public Document(FeatureVector features) {
-	//	super();
-	//	this.features = features;
-	//}
-	
-	//public Document(File f){
-	//    try{
-	//        init(new FileReader(f));
-	//    }catch(Exception e){
-	//        throw new RuntimeException(e);
-	//    }
-	//}
-	
-	public Tweet(String str, String user, String date, int uid, FeatureVector fv){
-	    //text=str;
-	    features=fv;
-	    text=str;
-	    this.user=user;
-	    dateTime=date;
-	    this.uid=uid;
-	}
+    private FeatureVector features;
+    private String text;
+    private String id;
+    private List<String> topics;
+    private TThread tthread = null;
+    private String user;
+    private String dateTime;
+    private int uid;
 
-	public TThread getTThread() {
-        return tthread;
+    //public Document(FeatureVector features) {
+    //	super();
+    //	this.features = features;
+    //}
+    //public Document(File f){
+    //    try{
+    //        init(new FileReader(f));
+    //    }catch(Exception e){
+    //        throw new RuntimeException(e);
+    //    }
+    //}
+    public Tweet(String str, String user, String date, int uid, FeatureVector fv) {
+        //text=str;
+        features = fv;
+        text = str;
+        this.user = user;
+        dateTime = date;
+        this.uid = uid;
     }
-	
-	public int getUid(){
-	    return uid;
-	}
 
-    public String getUser() {
-        return user;
+    public TThread getTThread() {
+        return tthread.getRoot();
     }
 
     public void setTThread(TThread tthread) {
-        this.tthread = tthread;
+        this.tthread=tthread;
+    }
+
+    public int getUid() {
+        return uid;
+    }
+
+    public String getUser() {
+        return user;
     }
 
     public String getId() {
@@ -67,12 +66,12 @@ public class Tweet implements Document, Comparable<Tweet>{
     }
 
     public FeatureVector getFeatures() {
-		return features;
-	}
+        return features;
+    }
 
-	public void setFeatures(FeatureVector features) {
-		this.features = features;
-	}
+    public void setFeatures(FeatureVector features) {
+        this.features = features;
+    }
 
     public String getText() {
         return text;
@@ -82,18 +81,17 @@ public class Tweet implements Document, Comparable<Tweet>{
         this.text = text;
     }
 
-    public int compareTo(Tweet other){
-        if(other.getTThread().getEntropy()>3.5&&tthread.getEntropy()<=3.5){
+    public int compareTo(Tweet other) {
+        if (other.getTThread().getEntropy() > 3.5 && tthread.getEntropy() <= 3.5) {
             return 1;
         }
-        if(other.getTThread().getEntropy()<=3.5&&tthread.getEntropy()>3.5){
+        if (other.getTThread().getEntropy() <= 3.5 && tthread.getEntropy() > 3.5) {
             return -1;
         }
-        return other.getTThread().getCount()-tthread.getCount();
+        return other.getTThread().getCount() - tthread.getCount();
     }
-    
-    public String toString(){
-        return dateTime + "\t" + tthread.getId() + "\t" + text; 
+
+    public String toString() {
+        return dateTime + "\t" + tthread.getId() + "\t" + text;
     }
-    
 }

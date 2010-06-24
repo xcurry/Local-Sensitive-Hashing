@@ -4,8 +4,6 @@ import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -19,6 +17,7 @@ public class TestTwitter {
     public static void main(String[] args) {
         
         String logFileName = "/u1/fsd/data/twitter/threads.log";
+        //String logFileName = "/home/cdoersch/threads.log";
         boolean printThreadMembership=false;
         boolean printSummary=true;
         
@@ -42,7 +41,7 @@ public class TestTwitter {
         int tweetsToProcess=1000000;//nDocs;//
         
         //how far do we look when merging threads?
-        int neighborhoodSize=1;
+        int neighborhoodSize=100;
         double threshold=.500001;
         
         int dimension=13;
@@ -222,7 +221,7 @@ public class TestTwitter {
         for(Tweet t: res.getTweets()){
             writer.write(t.getText() + "\n");
             i++;
-            if(i==10){
+            if(i==20){
                 break;
             }
         }
@@ -231,7 +230,7 @@ public class TestTwitter {
     public static void addThreadIfEvent(TThread t, ResultSet<TThread> fastestThreads){
         //System.out.println(t.getEntropy());
         t=t.getRoot();
-        if(t.getEntropy()>3.5 && t.getStartTweet()>TThread.recordingPeriod){
+        if(t.getStartTweet()>TThread.recordingPeriod && t.getEntropy()>3.5){
             fastestThreads.add(t,t.getCount());
         }
     }
