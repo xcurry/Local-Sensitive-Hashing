@@ -157,23 +157,33 @@ public class HMM {
     public void EStep(int[] obsSeq) {
         forward(obsSeq);
         backward(obsSeq);
+        double[][]tempTransCount = new double[totalStates][totalStates];
         for (int time = 0; time < obsSeq.length-1; ++time) {
             int sym = obsSeq[time];
+            double totalTransCount=0;
             for (int i = 0; i < totalStates; ++i) {
                 double curAlpha = alpha[time][i];
                 for (int j = 0; j < totalStates; ++j) {
                     double v = curAlpha * beta[time + 1][j] * transitions[i][j] * states[j][sym];
-                    transCount[i][j] += v;
-                    obsCount[i][sym] += v;
+                    tempTransCount[i][j] = v;
+                    totalTransCount+=v;
+                }
+            }
+            for(int i = 0; i<totalStates; i++){
+                for(int j = 0; j<totalStates; j++){
+                    transCount[i][j]+=tempTransCount[i][j]/totalTransCount;
                 }
             }
         }
-        System.out.println("count:");
-        for(int i = 0; i<totalStates; i++){
-            for(int j = 0; j<totalStates; j++){
-                System.out.print(transCount[i][j]+"\t");
+        for(int time=0; time<obsSeq.length; time++){
+            int sym=obsSeq[time];
+            double total=0;
+            for(int i = 0; i<totalStates; i++){
+                total+= alpha[time][i] * beta[time][i];
             }
-            System.out.println();
+            for(int i = 0; i<totalStates; i++){
+                obsCount[i][sym] += alpha[time][i] * beta[time][i]/total;
+            }
         }
     }
 
@@ -248,7 +258,7 @@ public class HMM {
         HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
         h.checkFB(obsSeq1);
         System.out.println(h.toString());
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < 20; ++i) {
             h.EStep(obsSeq1);
             h.EStep(obsSeq2);
             h.MStep();    
