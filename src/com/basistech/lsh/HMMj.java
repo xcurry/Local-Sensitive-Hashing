@@ -90,18 +90,29 @@ public class HMMj {
         extendTrellis(obsLength);
         int time = 0;
         int sym = obsSeq[0];
+        double sum = 0.0d;
         for (int i = 0; i < totalStates; ++i) {
-            alpha[time][i] = states[i][sym];
+            double v = states[i][sym];
+            alpha[time][i] = v;
+            sum += v;
+        }
+        for (int i = 0; i < totalStates; ++i) {
+            alpha[time][i] /= sum;
         }
         ++time;
         for (; time < obsLength; ++time) {
             sym = obsSeq[time];
+            sum = 0.0d;
             for (int j = 0; j < totalStates; ++j) {
                 double alphaAcc = 0.0d;
                 for (int i = 0; i < totalStates; ++i) {
                     alphaAcc += alpha[time - 1][i] * transitions[i][j]; 
                 }
                 alpha[time][j] = alphaAcc * states[j][sym];
+                sum += alpha[time][j];
+            }
+            for (int j = 0; j < totalStates; ++j) {
+                alpha[time][j] /= sum;
             }
         }
     }
@@ -111,16 +122,22 @@ public class HMMj {
         extendTrellis(obsLength);
         int time = obsLength - 1;
         for (int i = 0; i < totalStates; ++i) {
-            beta[time][i] = 1.0;
+            //beta[time][i] = 1.0;
+            beta[time][i] = 1.0 / totalStates;
         }
         --time;
         for (; time > -1; --time) {
+            double sum = 0.0d;
             for (int i = 0; i < totalStates; ++i) {
                 double betaAcc = 0.0d;
                 for (int j = 0; j < totalStates; ++j) {
                     betaAcc += beta[time + 1][j] * states[j][obsSeq[time + 1]] * transitions[i][j];
                 }
                 beta[time][i] = betaAcc;
+                sum += betaAcc;
+            }
+            for (int i = 0; i < totalStates; ++i) {
+                beta[time][i] /= sum;                
             }
         }
     }
@@ -234,7 +251,7 @@ public class HMMj {
         int[] obsSeq2 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};
         HMMj h = new HMMj(3, 3); // 3 states, observables {0, 1, 2}
         System.out.println(h.toString());
-        for (int i = 0; i < 20; ++i) {
+        for (int i = 0; i < 200; ++i) {
             h.EStep(obsSeq1);
             System.out.print("*"); h.checkFB(obsSeq1.length);
             h.EStep(obsSeq2);
