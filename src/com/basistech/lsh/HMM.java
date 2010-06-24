@@ -6,7 +6,7 @@ import java.util.Random;
 public class HMM {
     private static Random rng;
     static {
-        rng = new Random(2);
+        rng = new Random();
     }
     private int totalStates;
     private int totalObservations;
@@ -80,7 +80,7 @@ public class HMM {
         }
     }
 
-    private void initializeAccumulators() {
+    private void initializeAccumulators() {     
         transCount = new double[totalStates][totalStates];
         obsCount = new double[totalStates][totalObservations];
     }
@@ -90,18 +90,28 @@ public class HMM {
         extendTrellis(obsLength);
         int time = 0;
         int sym = obsSeq[0];
+        double alphaNorm=0;
         for (int i = 0; i < totalStates; ++i) {
             alpha[time][i] = states[i][sym];
+            alphaNorm+=alpha[time][i];
+        }
+        for (int i = 0; i < totalStates; ++i) {
+            alpha[time][i]/=alphaNorm;
         }
         ++time;
         for (; time < obsLength; ++time) {
             sym = obsSeq[time];
+            alphaNorm=0;
             for (int j = 0; j < totalStates; ++j) {
                 double alphaAcc = 0.0d;
                 for (int i = 0; i < totalStates; ++i) {
                     alphaAcc += alpha[time - 1][i] * transitions[i][j]; 
                 }
                 alpha[time][j] = alphaAcc * states[j][sym];
+                alphaNorm+=alpha[time][j];
+            }
+            for (int j = 0; j < totalStates; ++j) {
+                alpha[time][j]/=alphaNorm;
             }
         }
     }
@@ -111,16 +121,21 @@ public class HMM {
         extendTrellis(obsLength);
         int time = obsLength - 1;
         for (int i = 0; i < totalStates; ++i) {
-            beta[time][i] = 1.0;
+            beta[time][i] = 1.0/totalStates;
         }
         --time;
         for (; time > -1; --time) {
+            double betaNorm=0;
             for (int i = 0; i < totalStates; ++i) {
                 double betaAcc = 0.0d;
                 for (int j = 0; j < totalStates; ++j) {
                     betaAcc += beta[time + 1][j] * states[j][obsSeq[time + 1]] * transitions[i][j];
                 }
                 beta[time][i] = betaAcc;
+                betaNorm+=beta[time][i];
+            }
+            for (int i = 0; i < totalStates; ++i) {
+                beta[time][i]/=betaNorm;
             }
         }
     }
@@ -135,31 +150,38 @@ public class HMM {
         for (int i = 0; i < totalStates; ++i) {
             b += beta[0][i] * alpha[0][i];
         }
-        System.out.println("a = " + a + ", b = " + b);
+        System.err.println("a = " + a + ", b = " + b);
     }
 
     public void EStep(int[] obsSeq) {
         forward(obsSeq);
         backward(obsSeq);
-        
-        for (int time = 0; time < obsSeq.length - 1; ++time){
-            double sum = 0.0d;
+        double[][]tempTransCount = new double[totalStates][totalStates];
+        for (int time = 0; time < obsSeq.length-1; ++time) {
+            int sym = obsSeq[time+1];
+            double totalTransCount=0;
             for (int i = 0; i < totalStates; ++i) {
                 double curAlpha = alpha[time][i];
                 for (int j = 0; j < totalStates; ++j) {
-                    double count = curAlpha * transitions[i][j] * 
-                        states[j][obsSeq[time + 1]] * beta[time + 1][j];
-                    sum += count;
+                    double v = curAlpha * beta[time + 1][j] * transitions[i][j] * states[j][sym];
+                    tempTransCount[i][j] = v;
+                    totalTransCount+=v;
                 }
             }
-            for (int i = 0; i < totalStates; ++i) {
-                double curAlpha = alpha[time][i];
-                for (int j = 0; j < totalStates; ++j) {
-                    double count = curAlpha * transitions[i][j] * 
-                        states[j][obsSeq[time + 1]] * beta[time + 1][j] / sum;
-                    transCount[i][j] += count;
-                    obsCount[i][obsSeq[time]] += count;
+            for(int i = 0; i<totalStates; i++){
+                for(int j = 0; j<totalStates; j++){
+                    transCount[i][j]+=tempTransCount[i][j]/totalTransCount;
                 }
+            }
+        }
+        for(int time=0; time<obsSeq.length; time++){
+            int sym=obsSeq[time];
+            double total=0;
+            for(int i = 0; i<totalStates; i++){
+                total+= alpha[time][i] * beta[time][i];
+            }
+            for(int i = 0; i<totalStates; i++){
+                obsCount[i][sym] += alpha[time][i] * beta[time][i]/total;
             }
         }
     }
@@ -197,22 +219,7 @@ public class HMM {
     }
 
     public String toString() {
-        String s = "States:\n";
-        for (int i = 0; i < totalStates; ++i) {
-            s += i + ": ";
-            for (int sym = 0; sym < totalObservations; ++sym) {
-                s += String.format( "%d %.4f, ", sym, states[i][sym]);
-            }
-            s += "\n";            
-        }
-        s += "Transitions:\n";
-        for (int i = 0; i < totalStates; ++i) {
-            for (int j = 0; j < totalStates; ++j) {
-                s += String.format("%.4f ", transitions[i][j]);
-            }
-            s += "\n";
-        }
-        s += "Alpha:\n"; 
+        String s = "Alpha:\n";
         for (int i = 0; i < alpha.length; ++i) {
             for (int j = 0; j < totalStates; ++j) {
                 s += String.format("%.4f ", alpha[i][j]);
@@ -225,20 +232,35 @@ public class HMM {
                 s += String.format("%.4f ", beta[i][j]);
             }
             s += "\n";
-        }        
+        }
+        s += "States:\n";
+        for (int i = 0; i < totalStates; ++i) {
+            s += i + ": ";
+            for (int sym = 0; sym < totalObservations; ++sym) {
+                s += String.format( "%d %.4f, ", sym, states[i][sym]);
+            }
+            s += "\n";
+        }
+        s += "Transitions:\n";
+        for (int i = 0; i < totalStates; ++i) {
+            for (int j = 0; j < totalStates; ++j) {
+                s += String.format("%.4f ", transitions[i][j]);
+            }
+            s += "\n";
+        }
         return s;
     }
-    
+
     public static void test() {
         int[] obsSeq1 = {1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
         int[] obsSeq2 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};
         HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
         System.out.println(h.toString());
-        for (int i = 0; i < 20; ++i) {
+        for (int i = 0; i < 200; ++i) {
             h.EStep(obsSeq1);
-            System.out.print("*"); h.checkFB(obsSeq1.length);
+            h.checkFB(obsSeq1.length);
             h.EStep(obsSeq2);
-            System.out.print("+"); h.checkFB(obsSeq2.length);
+            h.checkFB(obsSeq2.length);
             h.MStep();    
             System.out.println("=== m-step ===");
             System.out.println(h.toString());
