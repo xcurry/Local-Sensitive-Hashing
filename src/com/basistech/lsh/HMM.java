@@ -82,7 +82,7 @@ public class HMM {
         obsCount = new double[totalStates][totalObservations];
     }
 
-    private double forward(int[] obsSeq) {
+    private void forward(int[] obsSeq) {
         int obsLength = obsSeq.length;
         extendTrellis(obsLength);
         int time = 0;
@@ -101,14 +101,9 @@ public class HMM {
                 alpha[time][j] = alphaAcc * states[j][sym];
             }
         }
-        double totalAlpha = 0.0d;
-        for (int i = 0; i < totalStates; ++i) {
-            totalAlpha += alpha[time - 1][i];
-        }
-        return totalAlpha;
     }
 
-    private double backward(int[] obsSeq) {
+    private void backward(int[] obsSeq) {
         int obsLength = obsSeq.length;
         extendTrellis(obsLength);
         int time = obsLength - 1;
@@ -125,14 +120,21 @@ public class HMM {
                 beta[time][i] = betaAcc;
             }
         }
-        double totalBeta = 0.0d;
-        for (int i = 0; i < totalStates; ++i) {
-            beta[0][i] *= states[i][obsSeq[0]];
-            totalBeta += beta[0][i];
-        }
-        return totalBeta;
     }
-
+    
+    private void checkFB(int[] obsSeq) {
+        forward(obsSeq);
+        backward(obsSeq);
+        double a = 0.0d;
+        for (int i = 0; i < totalStates; ++i) {
+            a += alpha[obsSeq.length - 1][i] * beta[obsSeq.length - 1][i];
+        }        
+        double b = 0.0d;
+        for (int i = 0; i < totalStates; ++i) {
+            b += beta[0][i] * alpha[0][i];
+        }
+        System.err.println("a = " + a + ", b = " + b);
+    }
 
     public void EStep(int[] obsSeq) {
         forward(obsSeq);
@@ -219,10 +221,7 @@ public class HMM {
         int[] obsSeq1 = {1, 1, 2};
         int[] obsSeq2 = {0, 0, 1};
         HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
-        double totalAlpha = h.forward(obsSeq1);
-        double totalBeta = h.backward(obsSeq1);
-        System.out.println("* a_tot = " + totalAlpha);
-        System.out.println("* b_tot = " + totalBeta);
+        h.checkFB(obsSeq1);
         System.out.println(h.toString());
         for (int i = 0; i < 3; ++i) {
             h.EStep(obsSeq1);
