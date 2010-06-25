@@ -20,6 +20,11 @@ public class HMM {
     private double[][] obsCount;
     private Vocabulary vocab = new Vocabulary();
     private FSDParser parser = null;
+    
+    private int docStart;
+    private int docEnd;
+    private int[] docs;
+    
 
     private static double log2=Math.log(2);
 
@@ -29,25 +34,50 @@ public class HMM {
         initStorage();
     }
 
-    public HMM(int nStates, List<String> docs, FSDParser parser){
+    public HMM(int nStates, List<String> docStrs, FSDParser parser){
         this.totalStates = nStates;
-        int[] docsConv = convertDocuments(docs);
+        docs = convertDocuments(docStrs);
         this.totalObservations=vocab.size();
         this.parser=parser;
         initStorage();
     }
-
-    private int[] convertDocuments(List<String> docs){
+    //  // create HMM with 128 states, obs alphabet all unique words
+    //  // parsed by parser
+    // HMM h = new HMM(128, docStrings, parser);
+    //  // do 5 rounds of EM on the corpus
+    // h.train(5); 
+    public void train(int nIters) {
+        for (int it = 0; it < nIters; ++it) {
+            int startPos = 0;
+            int endPos = -1;
+            for (int i = 0; i < docs.length; ++i) {
+                if (docs[i] == docStart) {
+                    startPos = i;
+                } else if (docs[i] == docEnd) {
+                    endPos = i;
+                    if (startPos < endPos) {
+                        int[] doc = Arrays.copyOfRange(docs, startPos, endPos + 1);
+                        EStep(doc);                        
+                    }
+                }                
+            }
+            MStep();
+        }
+    }    
+    
+    private int[] convertDocuments(List<String> docStrs){
         ArrayList<Integer> words = new ArrayList<Integer>();
-        //parser should never return the empty string
-        int boundaryChar=vocab.put("");
-        words.add(boundaryChar);
-        for(String doc: docs){
-            String[] parsedDoc = parser.parse(doc);
+        //parser should never return these strings
+        docStart=vocab.put(":START");
+        docEnd=vocab.put(":END");
+        words.add(docStart);
+        for(String docStr: docStrs){
+            String[] parsedDoc = parser.parse(docStr);
+            words.add(docStart);
             for(String s: parsedDoc){
                 words.add(vocab.put(s));
             }
-            words.add(boundaryChar);
+            words.add(docEnd);
         }
         int[] theRet=new int[words.size()];
         for(int i = 0; i<theRet.length; i++){
@@ -280,22 +310,6 @@ public class HMM {
             s += "\n";
         }
         return s;
-    }
-
-    public void train(List<String> documents, int nIters) {
-        for (int it = 0; it < nIters; ++it) {
-            for (String docStr : documents){
-                String[] parsedDoc = parser.parse(docStr);
-                int[] doc = new int[parsedDoc.length];
-                int i = 0;
-                for(String s: parsedDoc){
-                    doc[i] = vocab.get(s);
-                    ++i;
-                }
-                EStep(doc);
-            }
-            MStep();
-        }
     }
     
     public static void test() {
