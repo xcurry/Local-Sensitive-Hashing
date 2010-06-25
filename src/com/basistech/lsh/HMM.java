@@ -1,12 +1,14 @@
 package com.basistech.lsh;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 public class HMM {
     private static Random rng;
     static {
-        rng = new Random();
+        rng = new Random(2);
     }
     private int totalStates;
     private int totalObservations;
@@ -16,20 +18,49 @@ public class HMM {
     private double[][] beta;
     private double[][] transCount;
     private double[][] obsCount;
+    private Vocabulary vocab = new Vocabulary();
+    private FSDParser parser = null;
 
     private static double log2=Math.log(2);
 
-    public HMM(int nStates, int nObservations) {
+    private HMM(int nStates, int nObservations) {
         this.totalStates = nStates;
         this.totalObservations = nObservations;
-        init();
+        initStorage();
     }
-    
-    private void init() {
+
+    public HMM(int nStates, List<String> docs, FSDParser parser){
+        this.totalStates = nStates;
+        int[] docsConv = convertDocuments(docs);
+        this.totalObservations=vocab.size();
+        this.parser=parser;
+        initStorage();
+    }
+
+    private int[] convertDocuments(List<String> docs){
+        ArrayList<Integer> words = new ArrayList<Integer>();
+        //parser should never return the empty string
+        int boundaryChar=vocab.put("");
+        words.add(boundaryChar);
+        for(String doc: docs){
+            String[] parsedDoc = parser.parse(doc);
+            for(String s: parsedDoc){
+                words.add(vocab.put(s));
+            }
+            words.add(boundaryChar);
+        }
+        int[] theRet=new int[words.size()];
+        for(int i = 0; i<theRet.length; i++){
+            theRet[i]=words.get(i);
+        }
+        return theRet;
+    }
+
+    private void initStorage() {
         initializeStates();
-        initializeTransitions(); 
+        initializeTransitions();
         extendTrellis(5);
-        initializeAccumulators();        
+        initializeAccumulators();
     }
 
     private void initializeStates() {
@@ -37,7 +68,7 @@ public class HMM {
         for (int i = 0; i < totalStates; ++i) {
             double total = 0.0d;
             for (int j = 0; j < totalObservations; ++j) {
-                int v = Math.abs(rng.nextInt() % 4) + 1; 
+                int v = Math.abs(rng.nextInt() % 4) + 1;
                 states[i][j] = v;
                 total += v;
             }
@@ -53,12 +84,12 @@ public class HMM {
             double total = 0.0d;
             for (int j = 0; j < totalStates; ++j) {
                 // TODO: good dist?
-                int v = Math.abs(rng.nextInt() % 4) + 1; 
+                int v = Math.abs(rng.nextInt() % 4) + 1;
                 transitions[i][j] = v;
                 total += v;
             }
             for (int j = 0; j < totalStates; ++j) {
-                transitions[i][j] /= total;   
+                transitions[i][j] /= total;
             }
         }
     }
@@ -66,7 +97,7 @@ public class HMM {
     private void extendTrellis(int length) {
         if (alpha == null) {
             alpha = new double[length][totalStates];
-            beta = new double[length][totalStates];  
+            beta = new double[length][totalStates];
         } else if (alpha.length >= length) {
             return;
         } else {
@@ -105,7 +136,7 @@ public class HMM {
             for (int j = 0; j < totalStates; ++j) {
                 double alphaAcc = 0.0d;
                 for (int i = 0; i < totalStates; ++i) {
-                    alphaAcc += alpha[time - 1][i] * transitions[i][j]; 
+                    alphaAcc += alpha[time - 1][i] * transitions[i][j];
                 }
                 alpha[time][j] = alphaAcc * states[j][sym];
                 alphaNorm+=alpha[time][j];
@@ -139,13 +170,13 @@ public class HMM {
             }
         }
     }
-    
+
     private void checkFB(int length) {
         double a = 0.0d;
-        --length;
+        length--;
         for (int i = 0; i < totalStates; ++i) {
             a += alpha[length][i] * beta[length][i];
-        }        
+        }
         double b = 0.0d;
         for (int i = 0; i < totalStates; ++i) {
             b += beta[0][i] * alpha[0][i];
@@ -195,7 +226,7 @@ public class HMM {
             for (int sym = 0; sym < totalObservations; ++sym){
                 states[i][sym] = obsCount[i][sym] / obsTotal;
             }
-            
+
             double transTotal = 0.0d;
             for (int j = 0; j < totalStates; ++j) {
                 transTotal += transCount[i][j];
@@ -206,12 +237,12 @@ public class HMM {
         }
         resetAccumulators();
     }
-    
+
     private void resetAccumulators() {
         for (int i = 0; i < totalStates; ++i) {
             for (int j = 0; j < totalStates; ++j) {
                 transCount[i][j] = 0.0d;
-            }   
+            }
             for (int sym = 0; sym < totalObservations; ++sym) {
                 obsCount[i][sym] = 0.0d;
             }
@@ -252,9 +283,10 @@ public class HMM {
     }
 
     public static void test() {
-        int[] obsSeq1 = {1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
-        int[] obsSeq2 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};
+        int[] obsSeq2 = {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
+        int[] obsSeq1 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};
         HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
+        h.checkFB(obsSeq1.length);
         System.out.println(h.toString());
         for (int i = 0; i < 200; ++i) {
             h.EStep(obsSeq1);
