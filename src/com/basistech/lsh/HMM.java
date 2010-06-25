@@ -282,6 +282,22 @@ public class HMM {
         return s;
     }
 
+    public void train(List<String> documents, int nIters) {
+        for (int it = 0; it < nIters; ++it) {
+            for (String docStr : documents){
+                String[] parsedDoc = parser.parse(docStr);
+                int[] doc = new int[parsedDoc.length];
+                int i = 0;
+                for(String s: parsedDoc){
+                    doc[i] = vocab.get(s);
+                    ++i;
+                }
+                EStep(doc);
+            }
+            MStep();
+        }
+    }
+    
     public static void test() {
         int[] obsSeq2 = {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
         int[] obsSeq1 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};

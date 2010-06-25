@@ -14,6 +14,7 @@ public class HMMj {
     private double[][] transitions;
     private double[][] alpha;
     private double[][] beta;
+    private double[][] colCount;
     private double[][] transCount;
     private double[][] obsCount;
 
@@ -81,6 +82,7 @@ public class HMMj {
     }
 
     private void initializeAccumulators() {
+        colCount = new double[totalStates][totalStates];
         transCount = new double[totalStates][totalStates];
         obsCount = new double[totalStates][totalObservations];
     }
@@ -166,14 +168,13 @@ public class HMMj {
                 for (int j = 0; j < totalStates; ++j) {
                     double count = curAlpha * transitions[i][j] * 
                         states[j][obsSeq[time + 1]] * beta[time + 1][j];
+                    colCount[i][j] = count;
                     sum += count;
                 }
             }
             for (int i = 0; i < totalStates; ++i) {
-                double curAlpha = alpha[time][i];
                 for (int j = 0; j < totalStates; ++j) {
-                    double count = curAlpha * transitions[i][j] * 
-                        states[j][obsSeq[time + 1]] * beta[time + 1][j] / sum;
+                    double count = colCount[i][j] / sum;
                     transCount[i][j] += count;
                     obsCount[i][obsSeq[time]] += count;
                 }
