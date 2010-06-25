@@ -21,9 +21,7 @@ public class HMM {
     private Vocabulary vocab = new Vocabulary();
     private FSDParser parser = null;
     
-    private int docStart;
-    private int docEnd;
-    private int[] docs;
+    private List<int[]> docs;
     
 
     private static double log2=Math.log(2);
@@ -36,7 +34,7 @@ public class HMM {
 
     public HMM(int nStates, List<String> docStrs, FSDParser parser){
         this.totalStates = nStates;
-        docs = convertDocuments(docStrs);
+        saveDocuments(docStrs);
         this.totalObservations=vocab.size();
         this.parser=parser;
         initStorage();
@@ -48,42 +46,20 @@ public class HMM {
     // h.train(5); 
     public void train(int nIters) {
         for (int it = 0; it < nIters; ++it) {
-            int startPos = 0;
-            int endPos = -1;
-            for (int i = 0; i < docs.length; ++i) {
-                if (docs[i] == docStart) {
-                    startPos = i;
-                } else if (docs[i] == docEnd) {
-                    endPos = i;
-                    if (startPos < endPos) {
-                        int[] doc = Arrays.copyOfRange(docs, startPos, endPos + 1);
-                        EStep(doc);                        
-                    }
-                }                
+            for (int[] doc:docs) {
+                EStep(doc);                        
             }
             MStep();
         }
     }    
     
-    private int[] convertDocuments(List<String> docStrs){
-        ArrayList<Integer> words = new ArrayList<Integer>();
+    private List<int[]> saveDocuments(List<String> docStrs){
+        docs = new ArrayList<int[]>();
         //parser should never return these strings
-        docStart=vocab.put(":START");
-        docEnd=vocab.put(":END");
-        words.add(docStart);
         for(String docStr: docStrs){
-            String[] parsedDoc = parser.parse(docStr);
-            words.add(docStart);
-            for(String s: parsedDoc){
-                words.add(vocab.put(s));
-            }
-            words.add(docEnd);
+            docs.add(getTokenIds(docStr));
         }
-        int[] theRet=new int[words.size()];
-        for(int i = 0; i<theRet.length; i++){
-            theRet[i]=words.get(i);
-        }
-        return theRet;
+        return docs;
     }
 
     private void initStorage() {
