@@ -18,6 +18,7 @@ public class TThread {
     private static int nextid=0;
     private int id;
     private TThread parent=null;
+    private static FSDParser parser = new NonwordSplitParser();
     
     public TThread(int startTweet){
         this.startTweet=startTweet;
@@ -68,7 +69,7 @@ public class TThread {
         HashMap<String, Integer> unigramCount = new HashMap<String, Integer>();
         double totalCount = 0.0d;
         for (Tweet t : tweets) {
-            for (String tok : t.getText().split("\\W+")) {
+            for (String tok : parser.parse(t.getText())) {
                 Integer count = unigramCount.get(tok);
                 if (count == null) {
                     count = 0;

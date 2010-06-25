@@ -16,6 +16,7 @@ public class TFIDF2 {
     private boolean giveProportions=true;
     //idf-weight the featurevectors.  Not compatible with giveProportions==false.
     private boolean useIDF=false;
+    private FSDParser parser = new NonwordSplitParser();
 
     public TFIDF2() {
         df = new HashMap<Integer, Integer>();
@@ -64,7 +65,7 @@ public class TFIDF2 {
         //TODO: add lexer interface & whitespace lexer
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
-        String[] toks = str.split("\\W+");
+        String[] toks = parser.parse(str);
         for (String tok : toks) {
             Integer count = tf.get(tok);
             if (count == null) {

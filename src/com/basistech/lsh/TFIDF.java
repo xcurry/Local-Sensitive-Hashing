@@ -19,6 +19,7 @@ public class TFIDF {
     private HashMap<String, FeatureVector> tfidf;
     private int nDocs;
     private int totalWordCount;
+    private FSDParser parser = new NonwordSplitParser();
 
     public TFIDF() {
         df = new HashMap<Integer, Integer>();
@@ -38,7 +39,7 @@ public class TFIDF {
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
         while ((line = in.readLine()) != null) {
-            String[] toks = line.toLowerCase().split("\\W+");
+            String[] toks = parser.parse(line);
             for (String tok : toks) {
                 Integer count = tf.get(tok);
                 if (count == null) {
