@@ -1,7 +1,11 @@
 package com.basistech.lsh;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -32,7 +36,7 @@ public class PRPlot extends ApplicationFrame{
         setVisible(true);
     }
 
-    public JFreeChart getChart(List<Boolean> groundTruth, List<Double> discriminant){
+    public static JFreeChart getChart(List<Boolean> groundTruth, List<Double> discriminant){
         XYSeries curve = new XYSeries("");
         for(double thresh=1+1/(double)5000; thresh>=-1/(double)5000; thresh=thresh-1/(double)5000){
             int truePositives=0;
@@ -75,4 +79,10 @@ public class PRPlot extends ApplicationFrame{
             );
         return chart;
     }
+
+    public static void writeChart(List<Boolean> groundTruth, List<Double> discriminant, String file){try{
+        JFreeChart chart = getChart(groundTruth, discriminant);
+        BufferedImage buf = chart.createBufferedImage(1680, 1050);
+        ImageIO.write(buf, "png", new File(file));
+    }catch(IOException e){throw new RuntimeException(e);}}
 }

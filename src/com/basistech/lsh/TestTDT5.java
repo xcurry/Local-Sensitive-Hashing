@@ -17,15 +17,20 @@ public class TestTDT5 {
         
         TDT5DocStore docs = new TDT5DocStore();
         FilenameFilter english = new FilenameFilter(){
+            @Override
             public boolean accept(File dir, String name){
                 return name.contains("ENG");
             }
         };
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
-        docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\tkn_sgm",english);
+        //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\tkn_sgm",english);
+        docs.enqueueDir("/u1/fsd/data/tdt5/data/tkn_sgm",english);
+        //docs.enqueueDir("/home/cdoersch/data/tdt5/data/tkn_sgm",english);
         //docs.enqueueDir("/basis/users/cdoersch/data/tdt5/data/tkn_sgm",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
-        docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
+        docs.loadDocTopics("/u1/fsd/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
+        //docs.loadDocTopics("/home/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
+        //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
         int nDocs = docs.getDocCount();
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
@@ -93,7 +98,7 @@ public class TestTDT5 {
         }catch(IOException e){throw new RuntimeException(e);}
         System.out.println(isnew_ground.size()+" Documents added to LSH");
         
-        new PRPlot(isnew_ground,nearestNeighbor);
+        PRPlot.writeChart(isnew_ground,nearestNeighbor,"/u1/fsd/data/tdt5/perf_chart.png");
     }
 
 }

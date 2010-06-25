@@ -18,7 +18,7 @@ public class NonwordSplitParser implements FSDParser{
     public String[] parse(String doc) {
         //chop off nonword characters from the beginning and end of the
         //string so they don't cause empty-string tokens
-        Pattern p = Pattern.compile("\\w.*\\w");
+        Pattern p = Pattern.compile("\\w.*\\w",Pattern.DOTALL);
         Matcher m = p.matcher(doc);
         if(!m.find()){
             return new String[]{};
@@ -30,9 +30,14 @@ public class NonwordSplitParser implements FSDParser{
 
     private void test(){
         String str = "ab cd";
-        assert("cd".equals(parse(str)[2]));
+        String[] strs=parse(str);
+        System.out.println(strs[1]);
         str = ". ab .&^@ Cd ";
-        assert("cd".equals(parse(str)[2]));
+        strs=parse(str);
+        System.out.println(strs[1]);
+        str= "\nab\n cd ef gh ij kl mn op qr\n st uv wx yz\n ab cd";
+        strs=parse(str);
+        System.out.println(strs[14]);
     }
 
     public static void main(String[] args){

@@ -124,6 +124,10 @@ public class TDT5DocStore {
                             //System.out.println(n.getTextContent());
                             if("TEXT".equals(n.getNodeName())){
                                 docCount++;
+                                if(docCount%10000==0){
+                                    System.out.println("finished reading doc "+docCount);
+                                    System.out.flush();
+                                }
                                 //System.out.println(n.getTextContent());
                                 hasText=true;
                                 text=n.getTextContent();
@@ -153,7 +157,7 @@ public class TDT5DocStore {
             //System.out.println(((CharacterDataImpl)children).getData());
             throw new RuntimeException(e);
         }
-        TDT5Document.hmm=new HMM(1000,docsLoadedDuringCount, new NonwordSplitParser());
+        TDT5Document.hmm=new HMM(100,docsLoadedDuringCount, new NonwordSplitParser());
         hasCount=true;
         return docCount;
     }

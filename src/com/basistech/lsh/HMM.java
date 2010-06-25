@@ -34,10 +34,11 @@ public class HMM {
 
     public HMM(int nStates, List<String> docStrs, FSDParser parser){
         this.totalStates = nStates;
+        this.parser=parser;
         saveDocuments(docStrs);
         this.totalObservations=vocab.size();
-        this.parser=parser;
         initStorage();
+        train(20);
     }
     //  // create HMM with 128 states, obs alphabet all unique words
     //  // parsed by parser
@@ -46,9 +47,16 @@ public class HMM {
     // h.train(5); 
     public void train(int nIters) {
         for (int it = 0; it < nIters; ++it) {
+            int idx=0;
             for (int[] doc:docs) {
-                EStep(doc);                        
+                if(idx%500==0){
+                    System.out.println("Estep " + it + " doc number "+idx);
+                    System.out.flush();
+                }
+                EStep(doc);
+                idx++;
             }
+            System.out.println("Mstep "+it);
             MStep();
         }
     }    
@@ -255,6 +263,7 @@ public class HMM {
         }
     }
 
+    @Override
     public String toString() {
         String s = "Alpha:\n";
         for (int i = 0; i < alpha.length; ++i) {
@@ -315,7 +324,7 @@ public class HMM {
 
     public FeatureVector getFeatures(String doc){
         int[] intvals = getTokenIds(doc);
-        return getFeatures(doc);
+        return getFeatures(intvals);
     }
 
     private int[] getTokenIds(String doc){
