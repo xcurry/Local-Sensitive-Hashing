@@ -26,6 +26,7 @@ public class TDT5DocStore {
     private int currDoc=-1;
     NodeList currFileDocs;
     private HashMap<String,List<String>> docTopics = new HashMap<String,List<String>>();
+    List<String> docsLoadedDuringCount = new ArrayList<String>();
     public TDT5DocStore(){}
     
     public void enqueueDir(String dir, FilenameFilter filter){
@@ -141,8 +142,8 @@ public class TDT5DocStore {
                         }
                         if(hasText&&hasDocno){
                             List<String> topics = this.docTopics.get(docno);
-                            if(topics==null)
-                                TDT5Document.t.computeFeatures(new StringReader(text),true,true);
+                            if(topics!=null)
+                                docsLoadedDuringCount.add(text);
                         }
                     }
                 }
@@ -152,6 +153,7 @@ public class TDT5DocStore {
             //System.out.println(((CharacterDataImpl)children).getData());
             throw new RuntimeException(e);
         }
+        TDT5Document.hmm=new HMM(1000,docsLoadedDuringCount, new NonwordSplitParser());
         hasCount=true;
         return docCount;
     }

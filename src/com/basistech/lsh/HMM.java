@@ -337,7 +337,21 @@ public class HMM {
         test();
     }
 
-    public FeatureVector getFeatures(int[] doc){
+    public FeatureVector getFeatures(String doc){
+        int[] intvals = getTokenIds(doc);
+        return getFeatures(doc);
+    }
+
+    private int[] getTokenIds(String doc){
+        String[] tokens=parser.parse(doc);
+        int[] ret = new int[tokens.length];
+        for(int i = 0; i<tokens.length; i++){
+            ret[i]=vocab.put(tokens[i]);
+        }
+        return ret;
+    }
+
+    private FeatureVector getFeatures(int[] doc){
         forward(doc);
         backward(doc);
         double[][] transExpVals=new double[transitions.length][transitions[1].length];

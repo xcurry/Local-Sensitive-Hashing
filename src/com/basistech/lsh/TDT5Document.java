@@ -3,45 +3,43 @@ package com.basistech.lsh;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
-public class TDT5Document implements Document{
-	private FeatureVector features;
-	private String text;
-	private String id;
-	private List<String> topics;
-	public static TFIDF t;
-	static{
-	    t=new TFIDF();
-	}
+public class TDT5Document implements Document {
 
-	//public Document(FeatureVector features) {
-	//	super();
-	//	this.features = features;
-	//}
-	
-	//public Document(File f){
-	//    try{
-	//        init(new FileReader(f));
-	//    }catch(Exception e){
-	//        throw new RuntimeException(e);
-	//    }
-	//}
-	
-	private void init(Reader r){
-        try{
-            this.features = t.computeFeatures(r, true, false);
-        }catch(IOException e){
-            throw new RuntimeException(e);
-        }
-	}
-	
-	public TDT5Document(String str){
-	    //text=str;
-	    init(new StringReader(str));
-	}
+    private FeatureVector features;
+    private String text;
+    private String id;
+    private List<String> topics;
+    public static HMM hmm;
 
-	public String getId() {
+    //public Document(FeatureVector features) {
+    //	super();
+    //	this.features = features;
+    //}
+    //public Document(File f){
+    //    try{
+    //        init(new FileReader(f));
+    //    }catch(Exception e){
+    //        throw new RuntimeException(e);
+    //    }
+    //}
+    //private void init(Reader r) {
+        //try {
+        //    this.features = t.computeFeatures(r, true, false);
+        //} catch (IOException e) {
+        //    throw new RuntimeException(e);
+        //}
+    //}
+
+    public TDT5Document(String str) {
+        text=str;
+        //init(new StringReader(str));
+        this.features=hmm.getFeatures(str);
+    }
+
+    public String getId() {
         return id;
     }
 
@@ -58,12 +56,12 @@ public class TDT5Document implements Document{
     }
 
     public FeatureVector getFeatures() {
-		return features;
-	}
+        return features;
+    }
 
-	public void setFeatures(FeatureVector features) {
-		this.features = features;
-	}
+    public void setFeatures(FeatureVector features) {
+        this.features = features;
+    }
 
     public String getText() {
         return text;
@@ -72,7 +70,4 @@ public class TDT5Document implements Document{
     public void setText(String text) {
         this.text = text;
     }
-	
-	
-	
 }
