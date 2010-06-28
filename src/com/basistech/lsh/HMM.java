@@ -16,6 +16,7 @@ public class HMM {
     private double[][] transitions;
     private double[][] alpha;
     private double[][] beta;
+    private double[][] colCount;
     private double[][] transCount;
     private double[][] obsCount;
     private Vocabulary vocab = new Vocabulary();
@@ -126,6 +127,7 @@ public class HMM {
     }
 
     private void initializeAccumulators() {     
+        colCount = new double[totalStates][totalStates];
         transCount = new double[totalStates][totalStates];
         obsCount = new double[totalStates][totalObservations];
     }
@@ -201,32 +203,31 @@ public class HMM {
     public void EStep(int[] obsSeq) {
         forward(obsSeq);
         backward(obsSeq);
-        double[][]tempTransCount = new double[totalStates][totalStates];
         for (int time = 0; time < obsSeq.length-1; ++time) {
             int sym = obsSeq[time+1];
-            double totalTransCount=0;
+            double colTotal = 0.0d;
             for (int i = 0; i < totalStates; ++i) {
                 double curAlpha = alpha[time][i];
                 for (int j = 0; j < totalStates; ++j) {
                     double v = curAlpha * beta[time + 1][j] * transitions[i][j] * states[j][sym];
-                    tempTransCount[i][j] = v;
-                    totalTransCount+=v;
+                    colCount[i][j] = v;
+                    colTotal += v;
                 }
             }
             for(int i = 0; i<totalStates; i++){
                 for(int j = 0; j<totalStates; j++){
-                    transCount[i][j]+=tempTransCount[i][j]/totalTransCount;
+                    transCount[i][j] += colCount[i][j] / colTotal;
                 }
             }
         }
         for(int time=0; time<obsSeq.length; time++){
             int sym=obsSeq[time];
-            double total=0;
+            double total = 0.0d;
             for(int i = 0; i<totalStates; i++){
-                total+= alpha[time][i] * beta[time][i];
+                total += alpha[time][i] * beta[time][i];
             }
             for(int i = 0; i<totalStates; i++){
-                obsCount[i][sym] += alpha[time][i] * beta[time][i]/total;
+                obsCount[i][sym] += alpha[time][i] * beta[time][i] / total;
             }
         }
     }
@@ -301,7 +302,6 @@ public class HMM {
         int[] obsSeq2 = {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
         int[] obsSeq1 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};
         HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
-        h.checkFB(obsSeq1.length);
         System.out.println(h.toString());
         for (int i = 0; i < 200; ++i) {
             h.EStep(obsSeq1);
@@ -339,18 +339,18 @@ public class HMM {
     private FeatureVector getFeatures(int[] doc){
         forward(doc);
         backward(doc);
-        double[][] transExpVals=new double[transitions.length][transitions[1].length];
+        double[][] transExpVals=new double[totalStates][totalStates];
         for(int t = 0; t<doc.length-1; t++){
-            double[][] transProbs=new double[transitions.length][transitions[1].length];
+            double[][] transProbs=new double[totalStates][totalStates];
             double norm=0;
-            for(int i = 0; i<transProbs.length; i++){
-                for(int j = 0; j<transProbs[1].length; j++){
+            for(int i = 0; i<totalStates; i++){
+                for(int j = 0; j<totalStates; j++){
                     transProbs[i][j]=alpha[i][t]*transitions[i][j]*states[j][doc[t+1]]*beta[j][t+1];
                     norm+=transProbs[i][j];
                 }
             }
-            for(int i = 0; i<transProbs.length; i++){
-                for(int j = 0; j<transProbs[1].length; j++){
+            for(int i = 0; i<totalStates; i++){
+                for(int j = 0; j<totalStates; j++){
                     transExpVals[i][j]+=transProbs[i][j]/norm;
                 }
             }
@@ -359,8 +359,8 @@ public class HMM {
         FeatureVector featVec = new FeatureVector();
 
         int transid=0;
-        for(int i = 0; i<transitions.length; i++){
-            for(int j = 0; j<transitions[1].length; j++){
+        for(int i = 0; i<totalStates; i++){
+            for(int j = 0; j<totalStates; j++){
                 transid--;
                 featVec.put(transid,-transExpVals[i][j]*Math.log(transitions[i][j])/log2);
             }
@@ -368,11 +368,11 @@ public class HMM {
 
         for(int t = 0; t<doc.length; t++){
             double norm=0;
-            for(int i = 0; i<states.length; i++){
+            for(int i = 0; i<totalStates; i++){
                 norm+=alpha[i][t]*beta[i][t];
             }
             double expCodeLength=0;
-            for(int s=0; s<states.length; s++){
+            for(int s=0; s<totalStates; s++){
                 double prob=alpha[s][t]*beta[s][t]/norm;
                 expCodeLength+=prob*-Math.log(states[s][doc[t]]*9999/(double)10000+
                                               1/Math.pow(2, 32)*1/(double)10000)/log2;
