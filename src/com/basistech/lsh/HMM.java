@@ -386,4 +386,20 @@ public class HMM {
         }
         return featVec;
     }
+
+    public double[][] getTransCount() {
+        return transCount;
+    }
+
+    public double[][] getObsCount() {
+        return obsCount;
+    }
+
+    public int getTotalStates() {
+        return totalStates;
+    }
+
+    public int getTotalObservations() {
+        return totalObservations;
+    }
 }
