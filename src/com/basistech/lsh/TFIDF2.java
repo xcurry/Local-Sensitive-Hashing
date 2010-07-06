@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 //and computeTermFrequency work, though
 //TODO: make feature extractor interface
 //TODO: add lexer interface & whitespace lexer
-public class TFIDF2 {
+public class TFIDF2 extends Featurizer{
     private HashMap<Integer, Integer> df;
     private Vocabulary vocab;	
     private int nDocs;
@@ -21,6 +21,11 @@ public class TFIDF2 {
     public TFIDF2() {
         df = new HashMap<Integer, Integer>();
         vocab = new Vocabulary();
+    }
+
+    @Override
+    public FSDParser getParser() {
+        return parser;
     }
 
     public void setGiveProportions(boolean giveProportions) {
@@ -43,8 +48,15 @@ public class TFIDF2 {
         public HashMap<String, Integer> tf;
         public int total;		
     }
+
+    public void trainIDF(DocStore docs){
+        Document doc = null;
+        while((doc = docs.nextDoc())!=null){
+            addToIDF(doc.getText());
+        }
+    }
     
-    public void addToIDF(String text){
+    private void addToIDF(String text){
         if(!useIDF){
             throw new RuntimeException("cannot add to the IDF of a TFIDF2 that's not using IDF");
         }
@@ -61,7 +73,7 @@ public class TFIDF2 {
         nDocs=nDocs+1;
     }
 
-    public TFPair computeTermFrequency(String str){
+    private TFPair computeTermFrequency(String str){
         //TODO: add lexer interface & whitespace lexer
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
@@ -80,7 +92,7 @@ public class TFIDF2 {
         return tfp;
     }
 
-    public FeatureVector computeFeatures(String f){
+    private FeatureVector computeFeatures(String f){
         TFPair tfp = computeTermFrequency(f);
         int tfTotal = tfp.total;
         FeatureVector fv = new FeatureVector();
@@ -108,4 +120,11 @@ public class TFIDF2 {
         }
         return fv;
     }
+
+    @Override
+    public void deriveAndAddFeatures(Document doc) {
+        doc.setFeatures(computeFeatures(doc.getText()));
+    }
+
+
 }

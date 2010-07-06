@@ -20,8 +20,10 @@ public class PRPlot extends ApplicationFrame{
     private static final long serialVersionUID = -8571832684556874448L;
     
     public static void main(String[] args){
-        new PRPlot(Arrays.asList(new Boolean[]{true,false,true,false}),
-                             Arrays.asList(new Double[]{.6,.4,.8,.7})); 
+        List<Boolean> ground = Arrays.asList(new Boolean[]{true,false,true,false});
+        List<Double> pred = Arrays.asList(new Double[]{.6,.4,.8,.7});
+        //new PRPlot(ground,pred);
+        writeChart(ground,pred,"/u1/fsd/plot.png");
     }
 
     public PRPlot(List<Boolean> groundTruth, List<Double> discriminant) {

@@ -15,19 +15,20 @@ public class TestTwitter {
      * @param args
      */
     public static void main(String[] args) {
+        double threshold = Double.valueOf(args[0]);
+        System.out.println("TestTwitter, compiled on: "+ComputeEnvironment.getCompilationDate());
         
-        String logFileName = "/u1/fsd/data/twitter/threads.log";
+        String logFileName = ComputeEnvironment.getDataDirectory()+"/twitter/threads2"+threshold+".log";
         //String logFileName = "/home/cdoersch/threads.log";
-        boolean printThreadMembership=false;
-        boolean printSummary=true;
+        boolean printThreadMembership=true;
+        boolean printSummary=false;
         
         TwitterDocStore docs = new TwitterDocStore();
-        docs.addDirToIDF("/u1/fsd/data/twitter/idf",null);
         //docs.addDirToIDF("/home/cdoersch/data/twitter/idf",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
         //docs.enqueueDir("/home/cdoersch/data/twitter/split",null);
         //docs.enqueueDir("/Users/jwp/dev/data/twitter/split",null);
-        docs.enqueueDir("/u1/fsd/data/twitter/split",null);
+        docs.enqueueDir(ComputeEnvironment.getDataDirectory()+"/twitter/split",null);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
         //nDocs only affects the sizes of the buckets in the LSH.
@@ -38,11 +39,20 @@ public class TestTwitter {
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
         
-        int tweetsToProcess=1000000;//nDocs;//
+        int tweetsToProcess=nDocs;//
         
         //how far do we look when merging threads?
         int neighborhoodSize=100;
-        double threshold=.500001;
+        //double threshold=.500001;
+        //how long do we wait before deciding a thread won't be merged again?
+        int mergeWait=1000000;
+
+        TFIDF2 featurizer = new TFIDF2();
+        featurizer.setUseIDF(true);
+        TwitterDocStore idftrain = new TwitterDocStore();
+        idftrain.enqueueDir(ComputeEnvironment.getDataDirectory()+"/twitter/idf",null);
+        //idftrain.enqueueDir("/home/cdoersch/data/twitter/idf",null);
+        featurizer.trainIDF(idftrain);
         
         int dimension=13;
         int maxPerBucket = Math.max(2,(int)(.1*nDocs/Math.pow(2, dimension)));
@@ -55,7 +65,8 @@ public class TestTwitter {
         System.out.println("n tables: " + nTables);
         PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,2000);
         
-        LinkedList<TThread> recentThreads = new LinkedList<TThread>();
+        LinkedList<Tweet> recentThreads = new LinkedList<Tweet>();
+        LinkedList<Tweet> kindaRecentThreads = new LinkedList<Tweet>();
         ResultSet<TThread> fastestThreads = new ResultSet<TThread>(20);
         ArrayList<Tweet> annotatedDocs = new ArrayList<Tweet>();
         try{
@@ -80,6 +91,8 @@ public class TestTwitter {
                 if(currDoc.getUid()>=tweetsToProcess){
                     break;
                 }
+               
+                featurizer.deriveAndAddFeatures(currDoc);
                 
                 //use the lsh to find documents similar to currDoc 
                 ResultSet<Document> res = lsh.search(currDoc, neighborhoodSize);
@@ -143,34 +156,39 @@ public class TestTwitter {
                             other=toAddTo;
                             toAddTo=tmp;
                         }
-                        toAddTo.absorb(other);
+                        if(other.getStartTweet()<=toAddTo.getStartTweet()+TThread.recordingPeriod)
+                            toAddTo.absorb(other);
                     }
                 }
                 
                 //we won't actually know whether to add this thread to the result
                 //set until after the thread's recording period is over.  THerefore, we
                 //add it to a queue to be processed later.
-                recentThreads.offer(toAddTo);
+                recentThreads.offer(currDoc);
                 
                 //if there's threads added to recentThreads whose TThread.recordingPeriod's
                 //are guaranteed to be over (they've been in there for TThread.recordingPeriod
                 //posts), then add them to the results if they're interesting enough
                 if(recentThreads.size()>TThread.recordingPeriod){
-                    TThread judged = recentThreads.poll();
-                    addThreadIfEvent(judged,fastestThreads);
+                    Tweet judged = recentThreads.poll();
+                    addThreadIfEvent(judged.getTThread(),fastestThreads);
+                    if(printThreadMembership){
+                        kindaRecentThreads.offer(judged);
+                    }
                 }
+                if(kindaRecentThreads.size()>mergeWait){
+                    Tweet printed = kindaRecentThreads.poll();
+                    fw.write(printed.toString() + "\n");
+                    if(currDoc.getUid()%10000==0){
+                        fw.flush();
+                    }
+                }
+
                 
                 lsh.add(currDoc);
                 
                 if(currDoc.getAnnotations().size()>0){
                     annotatedDocs.add((Tweet)currDoc);
-                }
-                
-                if(printThreadMembership){
-                    fw.write(currDoc.toString() + "\n");
-                    if(currDoc.getUid()%10000==0){
-                        fw.flush();
-                    }
                 }
                 
             }
@@ -180,8 +198,17 @@ public class TestTwitter {
             //Go through the threads that we haven't yet had a chance
             //to add to the final ResultSet.
             while(recentThreads.size()>0){
-                TThread judged = recentThreads.poll();
-                addThreadIfEvent(judged,fastestThreads);
+                Tweet judged = recentThreads.poll();
+                addThreadIfEvent(judged.getTThread(),fastestThreads);
+                if(printThreadMembership){
+                    kindaRecentThreads.offer(judged);
+                }
+            }
+            
+            //and finish writing the thread memberships
+            while(kindaRecentThreads.size()>0){
+                Tweet printed = kindaRecentThreads.poll();
+                fw.write(printed.toString() + "\n");
             }
             
             for(ResultPair<TThread> t: fastestThreads.popResults()){

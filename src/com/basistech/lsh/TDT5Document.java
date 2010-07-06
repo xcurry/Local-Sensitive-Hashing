@@ -1,9 +1,5 @@
 package com.basistech.lsh;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TDT5Document implements Document {
@@ -12,7 +8,7 @@ public class TDT5Document implements Document {
     private String text;
     private String id;
     private List<String> topics;
-    public static HMM hmm;
+    private int uid;
 
     //public Document(FeatureVector features) {
     //	super();
@@ -33,10 +29,9 @@ public class TDT5Document implements Document {
         //}
     //}
 
-    public TDT5Document(String str) {
+    public TDT5Document(String str, int uid) {
         text=str;
         //init(new StringReader(str));
-        this.features=hmm.getFeatures(str);
     }
 
     public String getId() {
@@ -47,6 +42,7 @@ public class TDT5Document implements Document {
         this.id = id;
     }
 
+    @Override
     public List<String> getAnnotations() {
         return topics;
     }
@@ -55,19 +51,35 @@ public class TDT5Document implements Document {
         this.topics = topics;
     }
 
+    @Override
     public FeatureVector getFeatures() {
         return features;
     }
 
+    @Override
     public void setFeatures(FeatureVector features) {
         this.features = features;
     }
 
+    @Override
     public String getText() {
         return text;
     }
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    @Override
+    public boolean equals(Object other){
+        if(!(other instanceof TDT5Document)){
+            return false;
+        }
+        return ((TDT5Document)other).uid==this.uid;
+    }
+
+    @Override
+    public int hashCode(){
+        return uid;
     }
 }

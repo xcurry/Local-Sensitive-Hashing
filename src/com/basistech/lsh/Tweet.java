@@ -24,13 +24,26 @@ public class Tweet implements Document, Comparable<Tweet> {
     //        throw new RuntimeException(e);
     //    }
     //}
-    public Tweet(String str, String user, String date, int uid, FeatureVector fv) {
+    public Tweet(String str, String user, String date, int uid) {
         //text=str;
-        features = fv;
+        features = null;
         text = str;
         this.user = user;
         dateTime = date;
         this.uid = uid;
+    }
+
+    @Override
+    public boolean equals(Object other){
+        if(!(other instanceof Tweet)){
+            return false;
+        }
+        return ((Tweet)other).uid==this.uid;
+    }
+
+    @Override
+    public int hashCode(){
+        return uid;
     }
 
     public TThread getTThread() {
@@ -92,6 +105,6 @@ public class Tweet implements Document, Comparable<Tweet> {
     }
 
     public String toString() {
-        return dateTime + "\t" + tthread.getId() + "\t" + text;
+        return dateTime + "\t" + getTThread().getId() + "\t" + text;
     }
 }

@@ -17,6 +17,9 @@ public class HashingProjection {
         for (int featId : featVec.keySet()) {
             double featValue = featVec.get(featId);
             featId=featId%modSize;
+            if(featId<0){
+                featId+=modSize;
+            }
             Double coef=rep[featId];
             dotProduct += featValue * coef;			
         }		

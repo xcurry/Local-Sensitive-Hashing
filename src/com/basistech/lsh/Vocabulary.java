@@ -44,4 +44,13 @@ public class Vocabulary {
     public String toString() {
         return table.toString();        
     }
+
+    public String reverseLookup(int i){
+        for(String s: table.keySet()){
+            if(table.get(s).intValue()==i){
+                return s;
+            }
+        }
+        return null;
+    }
 }

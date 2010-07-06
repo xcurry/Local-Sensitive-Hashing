@@ -1,11 +1,13 @@
 package com.basistech.lsh;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.Random;
 
-public class HMM {
+public class HMM implements Serializable{
+
     private static Random rng;
     static {
         rng = new Random(2);
@@ -19,56 +21,54 @@ public class HMM {
     private double[][] colCount;
     private double[][] transCount;
     private double[][] obsCount;
-    private Vocabulary vocab = new Vocabulary();
-    private FSDParser parser = null;
-    
-    private List<int[]> docs;
+    private int trainingIterations = 0;
     
 
     private static double log2=Math.log(2);
 
-    private HMM(int nStates, int nObservations) {
+    public HMM(int nStates, int nObservations) {
         this.totalStates = nStates;
         this.totalObservations = nObservations;
         initStorage();
     }
 
-    public HMM(int nStates, List<String> docStrs, FSDParser parser){
-        this.totalStates = nStates;
-        this.parser=parser;
-        saveDocuments(docStrs);
-        this.totalObservations=vocab.size();
-        initStorage();
-        train(20);
-    }
+    //@Override
+    //public FSDParser getParser() {
+    //    return parser;
+    //}
+
+    //public HMM(int nStates, List<String> docStrs, FSDParser parser){
+    //    this.totalStates = nStates;
+    //    this.parser=parser;
+    //    saveDocuments(docStrs);
+    //    this.totalObservations=vocab.size();
+    //    initStorage();
+    //    train(20);
+    //}
     //  // create HMM with 128 states, obs alphabet all unique words
     //  // parsed by parser
     // HMM h = new HMM(128, docStrings, parser);
     //  // do 5 rounds of EM on the corpus
     // h.train(5); 
-    public void train(int nIters) {
-        for (int it = 0; it < nIters; ++it) {
-            int idx=0;
-            for (int[] doc:docs) {
-                if(idx%500==0){
-                    System.out.println("Estep " + it + " doc number "+idx);
-                    System.out.flush();
-                }
-                EStep(doc);
-                idx++;
-            }
-            System.out.println("Mstep "+it);
-            MStep();
-        }
-    }    
-    
-    private List<int[]> saveDocuments(List<String> docStrs){
-        docs = new ArrayList<int[]>();
-        //parser should never return these strings
-        for(String docStr: docStrs){
-            docs.add(getTokenIds(docStr));
-        }
-        return docs;
+    //public void train(int nIters) {
+    //    for (int it = 0; it < nIters; ++it) {
+    //        int idx=0;
+    //        for (int[] doc:docs) {
+    //            if(idx%500==0){
+    //                System.out.println("Estep " + it + " doc number "+idx);
+    //                System.out.flush();
+    //            }
+    //            EStep(doc);
+    //            idx++;
+    //        }
+    //        System.out.println("Mstep "+it);
+    //        MStep();
+    //        trainingIterations++;
+    //    }
+    //}
+
+    public int getTrainingIterations() {
+        return trainingIterations;
     }
 
     private void initStorage() {
@@ -154,7 +154,12 @@ public class HMM {
                 for (int i = 0; i < totalStates; ++i) {
                     alphaAcc += alpha[time - 1][i] * transitions[i][j];
                 }
-                alpha[time][j] = alphaAcc * states[j][sym];
+                try{
+                    alpha[time][j] = alphaAcc * states[j][sym];
+                }catch(ArrayIndexOutOfBoundsException e){
+                    System.out.println("alpha:"+alpha.length+","+alpha[0].length+" time:"+time+" j:"+j+"states:"+states.length+","+states[0].length+" sym:"+sym);
+                    throw e;
+                }
                 alphaNorm+=alpha[time][j];
             }
             for (int j = 0; j < totalStates; ++j) {
@@ -251,15 +256,31 @@ public class HMM {
             }
         }
         resetAccumulators();
+        trainingIterations++;
     }
 
-    private void resetAccumulators() {
+    public void resetAccumulators() {
         for (int i = 0; i < totalStates; ++i) {
             for (int j = 0; j < totalStates; ++j) {
                 transCount[i][j] = 0.0d;
             }
             for (int sym = 0; sym < totalObservations; ++sym) {
                 obsCount[i][sym] = 0.0d;
+            }
+        }
+    }
+
+    public void mergeAccumulators(HMM other){
+        double[][] otherObsCount = other.obsCount;
+        double[][] otherTransCount = other.transCount;
+        int nStates = getTotalStates();
+        int nObs = getTotalObservations();
+        for (int i = 0; i < nStates; ++i) {
+            for (int j = 0; j < nStates; ++j) {
+                transCount[i][j] += otherTransCount[i][j];
+            }
+            for (int k = 0; k < nObs; ++k) {
+                obsCount[i][k] += otherObsCount[i][k];
             }
         }
     }
@@ -297,6 +318,36 @@ public class HMM {
         }
         return s;
     }
+
+    public String printStatesCompact(Vocabulary v){
+        StringBuilder s = new StringBuilder();
+
+        class keyProbPair implements Comparable<keyProbPair>{
+            public int key;
+            public Double prob;
+
+            @Override
+            public int compareTo(keyProbPair o) {
+                return -prob.compareTo(o.prob);
+            }
+        }
+        for(int i = 0; i<totalStates; i++){
+            s.append("\n"+i+":\n");
+            ArrayList<keyProbPair> keys = new ArrayList<keyProbPair>();
+            for(int sym = 0; sym<totalObservations; sym++){
+                keyProbPair kpp = new keyProbPair();
+                kpp.key=sym;
+                kpp.prob=states[i][sym];
+                keys.add(kpp);
+            }
+            Collections.sort(keys);
+            for(int j=0; j<40; j++){
+                keyProbPair key = keys.get(j);
+                s.append(String.format("%10f:%s\n",key.prob,v.reverseLookup(key.key)));
+            }
+        }
+        return s.toString();
+    }
     
     public static void test() {
         int[] obsSeq2 = {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
@@ -322,21 +373,8 @@ public class HMM {
         test();
     }
 
-    public FeatureVector getFeatures(String doc){
-        int[] intvals = getTokenIds(doc);
-        return getFeatures(intvals);
-    }
 
-    private int[] getTokenIds(String doc){
-        String[] tokens=parser.parse(doc);
-        int[] ret = new int[tokens.length];
-        for(int i = 0; i<tokens.length; i++){
-            ret[i]=vocab.put(tokens[i]);
-        }
-        return ret;
-    }
-
-    private FeatureVector getFeatures(int[] doc){
+    public FeatureVector getFeatures(int[] doc){
         forward(doc);
         backward(doc);
         double[][] transExpVals=new double[totalStates][totalStates];
@@ -345,7 +383,7 @@ public class HMM {
             double norm=0;
             for(int i = 0; i<totalStates; i++){
                 for(int j = 0; j<totalStates; j++){
-                    transProbs[i][j]=alpha[i][t]*transitions[i][j]*states[j][doc[t+1]]*beta[j][t+1];
+                    transProbs[i][j]=alpha[t][i]*transitions[i][j]*states[j][doc[t+1]]*beta[t+1][j];
                     norm+=transProbs[i][j];
                 }
             }
@@ -362,18 +400,22 @@ public class HMM {
         for(int i = 0; i<totalStates; i++){
             for(int j = 0; j<totalStates; j++){
                 transid--;
-                featVec.put(transid,-transExpVals[i][j]*Math.log(transitions[i][j])/log2);
+                double val = -transExpVals[i][j]*Math.log(transitions[i][j])/log2;
+                if(!Double.isNaN(val)){
+                    featVec.put(transid,val);
+                }//if val isNaN, then we underflowed (the transition probably never happened).
+                 //just leave it out.
             }
         }
 
         for(int t = 0; t<doc.length; t++){
             double norm=0;
             for(int i = 0; i<totalStates; i++){
-                norm+=alpha[i][t]*beta[i][t];
+                norm+=alpha[t][i]*beta[t][i];
             }
             double expCodeLength=0;
             for(int s=0; s<totalStates; s++){
-                double prob=alpha[s][t]*beta[s][t]/norm;
+                double prob=alpha[t][s]*beta[t][s]/norm;
                 expCodeLength+=prob*-Math.log(states[s][doc[t]]*9999/(double)10000+
                                               1/Math.pow(2, 32)*1/(double)10000)/log2;
             }
@@ -385,14 +427,6 @@ public class HMM {
             featVec.put(doc[t],bits);
         }
         return featVec;
-    }
-
-    public double[][] getTransCount() {
-        return transCount;
-    }
-
-    public double[][] getObsCount() {
-        return obsCount;
     }
 
     public int getTotalStates() {

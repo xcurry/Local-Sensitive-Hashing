@@ -18,7 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class TDT5DocStore {
+public class TDT5DocStore implements DocStore{
     private List<File> fileList = new ArrayList<File>();
     private int docCount;
     private boolean hasCount = false;
@@ -26,7 +26,27 @@ public class TDT5DocStore {
     private int currDoc=-1;
     NodeList currFileDocs;
     private HashMap<String,List<String>> docTopics = new HashMap<String,List<String>>();
-    List<String> docsLoadedDuringCount = new ArrayList<String>();
+    int nextUid=0;
+    boolean annotatedDocsOnly;
+
+    @Override
+    public TDT5DocStore clone(){
+        TDT5DocStore newStore = new TDT5DocStore();
+        newStore.fileList = new ArrayList(fileList);
+        newStore.docCount=docCount;
+        newStore.hasCount = hasCount;
+        newStore.nextToParse=nextToParse;
+        newStore.currDoc=currDoc;
+        newStore.currFileDocs=currFileDocs;
+        newStore.docTopics = new HashMap<String,List<String>>();
+        newStore.nextUid=nextUid;
+        newStore.annotatedDocsOnly=annotatedDocsOnly;
+        for(String s: docTopics.keySet()){
+            newStore.docTopics.put(s, new ArrayList<String>(docTopics.get(s)));
+        }
+        return newStore;
+    }
+    
     public TDT5DocStore(){}
     
     public void enqueueDir(String dir, FilenameFilter filter){
@@ -98,11 +118,29 @@ public class TDT5DocStore {
         }
         System.out.println("Loaded "+numLoaded+" Topics");
     }catch(Exception e){throw new RuntimeException(e);}}
-    
+
+    public void setAnnotatedDocsOnly(boolean annotatedDocsOnly) {
+        this.annotatedDocsOnly = annotatedDocsOnly;
+    }
+
+    @Override
+    public void reset(){
+        nextToParse=0;
+        currDoc=-1;
+        currFileDocs = null;
+    }
+
     public int getDocCount(){
         if(hasCount){
             return docCount;
         }
+        TDT5DocStore counter = this.clone();
+        counter.reset();
+        docCount=0;
+        while(counter.nextDoc()!=null){
+            docCount++;
+        }
+        /*
         int i=0;
         int j=0;
         NodeList children = null;
@@ -157,11 +195,12 @@ public class TDT5DocStore {
             //System.out.println(((CharacterDataImpl)children).getData());
             throw new RuntimeException(e);
         }
-        TDT5Document.hmm=new HMM(100,docsLoadedDuringCount, new NonwordSplitParser());
+         */
         hasCount=true;
         return docCount;
     }
-    
+
+    @Override
     public Document nextDoc(){
         String text = null;
         String docno = null;
@@ -194,14 +233,18 @@ public class TDT5DocStore {
                     }
                 }
             }
-        }catch(Exception e){
-            throw new RuntimeException(e);
-        }
-        TDT5Document theReturn = new TDT5Document(text);
+        }catch(Exception e){throw new RuntimeException(e);}
+        TDT5Document theReturn = new TDT5Document(text,nextUid);
+        nextUid++;
         theReturn.setId(docno);
         List<String> topics = this.docTopics.get(docno);
-        if(topics==null)
-            topics = new ArrayList<String>();
+        if(topics==null){
+            if(annotatedDocsOnly){
+                return nextDoc();
+            }else{
+                topics = new ArrayList<String>();
+            }
+        }
         theReturn.setAnnotations(topics);
         return theReturn;
     }
