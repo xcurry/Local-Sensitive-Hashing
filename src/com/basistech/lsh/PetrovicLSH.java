@@ -86,11 +86,19 @@ public class PetrovicLSH {
     	startWorkers.await();
     	doneWorkers.await();
     	docToSearch=null;
-        ResultSet<Document> filter = new ResultSet<Document>(3*nTables);
+    	ResultSet<Document> filter = new ResultSet<Document>(3*nTables);
+    	HashMap<Document, Integer> merged = new HashMap<Document, Integer>();
         for(HashMap<Document, Integer> results: searchResults){
             for(Document d: results.keySet()){
-            	filter.add(d, (results.get(d)));
+                Integer prevCount = merged.get(d);
+                if (prevCount != null) {
+                    int count = results.get(d) + prevCount; 
+                    merged.put(d, count);
+                }               
             }
+        }
+        for(Document d: merged.keySet()){
+            filter.add(d, merged.get(d));
         }
         ResultSet<Document> theReturn = new ResultSet<Document>(nResults);
         for(ResultPair<Document> rp: filter.popResults()){
