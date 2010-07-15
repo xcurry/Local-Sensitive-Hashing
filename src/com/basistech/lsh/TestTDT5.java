@@ -33,67 +33,64 @@ public class TestTDT5 {
         docs.setAnnotatedDocsOnly(true);
         //docs.loadDocTopics("/home/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
-        int nDocs = docs.getDocCount();
+        int nDocs = 6366;//docs.getDocCount();
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
 
-        HMMTrainer trainer;
-        if(ComputeEnvironment.isCluster()){
-            trainer = new HMMTrainer(16);
-        }else{
-            trainer = new HMMTrainer(1);
-        }
-        trainer.useCorpus(docs);
-        HMMFeaturizer hmm = trainer.getTrainedHMM(40);
+        //HMMTrainer trainer;
+        //if(ComputeEnvironment.isCluster()){
+        //    trainer = new HMMTrainer(24);
+        //}else{
+        //    trainer = new HMMTrainer(1);
+        //}
+        //trainer.useCorpus(docs);
+        //HMMFeaturizer hmm = trainer.getTrainedHMM(40);
+        //Featurizer feats = hmm;
+        TFIDF2 tfidf = new TFIDF2();
+        tfidf.setGiveProportions(true);
+        tfidf.setUseIDF(true);
+        tfidf.trainIDF(docs);
+        Featurizer feats = tfidf;
+        
         docs.reset();
         
         ArrayList<Boolean> isnew_ground = new ArrayList<Boolean>();
         HashSet<String> labelset = new HashSet<String>();
         
         ArrayList<Double> nearestNeighbor = new ArrayList<Double>();
-        nearestNeighbor.add(1.0);
         int dimension=13;
-        int maxPerBucket = Math.max(2,(int)(.5*nDocs/Math.pow(2, dimension)));
+        int nDocs2=270000;
+        int maxPerBucket = Math.max(2,(int)(.5*nDocs2/Math.pow(2, dimension)));
         Integer cap=ComputeEnvironment.getBucketSizeCap();
         if(cap!=null&&maxPerBucket>cap){
             maxPerBucket = cap;
         }
+        double cosSim=.8;
+        double pColl=1. - Math.acos(cosSim)/Math.PI;
         int nTables = (int)Math.ceil(
                                Math.log(.025)/
-                      (Math.log(1-Math.pow(.8,(double)dimension/2))+
-                              Math.log(1+Math.pow(.8,(double)dimension/2)))
+                      (Math.log(1-Math.pow(pColl,(double)dimension)))
             );
         System.out.println(nTables);
-        PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,2000);
-        Document firstDoc = docs.nextDoc();
-        while(firstDoc.getAnnotations().size()==0){
-            firstDoc=docs.nextDoc();
-        }
-        hmm.deriveAndAddFeatures(firstDoc);
-        lsh.add(firstDoc);
+        PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,0);
+        //to run the experiment with 7 dimensions, replace the above line with this one:
+        //PetrovicLSH lsh = new PetrovicLSH(7, maxPerBucket, nTables,0);
+        ParallelDocumentAnalyzer pda = new ParallelDocumentAnalyzer(lsh, feats, docs, 5);
         
-        isnew_ground.add(true);
-        labelset.addAll(firstDoc.getAnnotations());
         File f = new File(ComputeEnvironment.getVarDirectory(),"distances.log");
         try{
             PrintStream fw=new PrintStream(f);
-            for(int i=1; i<nDocs; i++){
+            Document currDoc;
+            int i = 0;
+            while((currDoc=pda.nextDoc())!=null){
                 if(i%1000==0){
                     System.out.println("Processing document "+i);
+                    System.out.flush();
                 }
-                Document currDoc = docs.nextDoc();
-                if(currDoc==null){
-                    break;
-                }
-                if(currDoc.getAnnotations().size()==0){
-                    continue;
-                }
-                //if(i%3==0){
-                //    continue;
-                //}
-                hmm.deriveAndAddFeatures(currDoc);
+                //if you disable the document analyzer, you need to un-comment this line.
+                //feats.deriveAndAddFeatures(currDoc);
                 ResultSet<Document> res = lsh.search(currDoc, 1);
                 List<ResultPair<Document>> resultList = res.popResults();
                 if(resultList.size()>0){
@@ -117,7 +114,7 @@ public class TestTDT5 {
                     fw.println("old:"+nearestNeighbor.get(nearestNeighbor.size()-1));
                 }
                 lsh.add(currDoc);
-                
+                i++;
             }
         }catch(IOException e){throw new RuntimeException(e);}
         System.out.println(isnew_ground.size()+" Documents added to LSH");

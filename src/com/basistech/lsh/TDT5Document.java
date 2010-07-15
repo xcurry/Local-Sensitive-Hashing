@@ -9,6 +9,7 @@ public class TDT5Document implements Document {
     private String id;
     private List<String> topics;
     private int uid;
+    private int[] hash;
 
     //public Document(FeatureVector features) {
     //	super();
@@ -31,8 +32,21 @@ public class TDT5Document implements Document {
 
     public TDT5Document(String str, int uid) {
         text=str;
+        this.uid=uid;
         //init(new StringReader(str));
     }
+
+    @Override
+    public int[] getHash() {
+        return hash;
+    }
+
+    @Override
+    public void setHash(int[] hash) {
+        this.hash=hash;
+    }
+
+
 
     public String getId() {
         return id;

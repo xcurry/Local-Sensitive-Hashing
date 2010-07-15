@@ -138,4 +138,11 @@ public class FeatureVector implements Map<Integer, Double>{
         hasNorm=true;
         return norm;
     }
+
+   // public void print(){
+   //     for(Integer i: rep.keySet()){
+   //         System.out.println(TFIDF2.vocab.reverseLookup(i)+" "+i+" "+rep.get(i));
+   //     }
+   //     System.exit(0);
+   // }
 }

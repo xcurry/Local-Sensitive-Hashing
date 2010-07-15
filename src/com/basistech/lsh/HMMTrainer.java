@@ -23,7 +23,7 @@ public class HMMTrainer {
     private boolean hasParceledDocuments;
     private String[] docParcels;
     private Vocabulary vocab = new Vocabulary();
-    private FSDParser parser = new NonwordSplitParser();
+    private FSDParser parser = new CommonWordRemovalParser();
     private File currHMMFile = null;
 
     private HMM currHMM;

@@ -5,22 +5,25 @@ import java.util.Map.Entry;
 
 //most of this class is probably broken--computeFeatures 
 //and computeTermFrequency work, though
-//TODO: make feature extractor interface
-//TODO: add lexer interface & whitespace lexer
 public class TFIDF2 extends Featurizer{
     private HashMap<Integer, Integer> df;
-    private Vocabulary vocab;	
+    private Vocabulary vocab;
     private int nDocs;
     
     //if false, give featurevectors that are raw counts. 
     private boolean giveProportions=true;
     //idf-weight the featurevectors.  Not compatible with giveProportions==false.
     private boolean useIDF=false;
-    private FSDParser parser = new NonwordSplitParser();
+    private FSDParser parser = new CommonWordRemovalParser();
 
     public TFIDF2() {
         df = new HashMap<Integer, Integer>();
         vocab = new Vocabulary();
+    }
+
+    @Override
+    public Vocabulary getVocabulary() {
+        return vocab;
     }
 
     @Override
@@ -108,11 +111,11 @@ public class TFIDF2 extends Featurizer{
                 Integer docCount = df.get(termId);
                 double dbDocCount=0;
                 if(docCount==null){
-                    dbDocCount=.5;//nDocs/(double)10000;
+                    dbDocCount=nDocs/(double)10000;//.5;
                 }else{
-                    dbDocCount=docCount;//+nDocs/(double)10000;
+                    dbDocCount=docCount+nDocs/(double)10000;
                 }
-                double idf = LogN.value(nDocs) - Math.log(dbDocCount)/Math.log(2);
+                double idf = LogN.value(nDocs) - Math.log(docCount)/Math.log(2);
                 fv.put(termId, tf*idf);
             }else{
             	fv.put(termId, tf);
@@ -125,6 +128,5 @@ public class TFIDF2 extends Featurizer{
     public void deriveAndAddFeatures(Document doc) {
         doc.setFeatures(computeFeatures(doc.getText()));
     }
-
 
 }

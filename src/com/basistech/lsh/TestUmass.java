@@ -21,15 +21,23 @@ public class TestUmass {
             }
         };
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\tmp",english);
-        docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\tkn_sgm",english);
+        docs.enqueueDir(ComputeEnvironment.getDataDirectory()+"/tdt5/data/tkn_sgm",english);
+        //docs.enqueueDir("/home/cdoersch/data/tdt5/data/tkn_sgm",english);
         //docs.enqueueDir("/basis/users/cdoersch/data/tdt5/data/tkn_sgm",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
-        int nDocs = 278108;//docs.getDocCount();
+        docs.loadDocTopics(ComputeEnvironment.getDataDirectory()+"/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
+        docs.setAnnotatedDocsOnly(true);
+        //docs.loadDocTopics("/home/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
+        //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
+        int nDocs = docs.getDocCount();
         System.out.println("Found "+nDocs+" documents");
-        docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
-        //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
-        //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
-        //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
+        TFIDF2 tfidf = new TFIDF2();
+        tfidf.setGiveProportions(true);
+        tfidf.setUseIDF(true);
+        tfidf.trainIDF(docs);
+        Featurizer feats = tfidf;
+
+        docs.reset();
         
         ArrayList<Boolean> isnew_ground = new ArrayList<Boolean>();
         HashSet<String> labelset = new HashSet<String>();
@@ -38,7 +46,8 @@ public class TestUmass {
         nearestNeighbor.add(1.0);
         
         ArrayList<Document> prevDocs = new ArrayList<Document>();
-        Document firstDoc = docs.nextDoc(); 
+        Document firstDoc = docs.nextDoc();
+        feats.deriveAndAddFeatures(firstDoc);
         prevDocs.add(firstDoc);
         
         isnew_ground.add(true);
@@ -54,6 +63,7 @@ public class TestUmass {
                 if(currDoc.getAnnotations().size()==0){
                     continue;
                 }
+                feats.deriveAndAddFeatures(currDoc);
                 ResultPair<Document> bestDoc = new ResultPair<Document>(null,Double.NEGATIVE_INFINITY);
                 for(Document d:prevDocs){
                     double score=CosineSimilarity.value(d.getFeatures(),currDoc.getFeatures());
@@ -80,7 +90,7 @@ public class TestUmass {
                 
             }
         }catch(IOException e){throw new RuntimeException(e);}
-        System.out.println(isnew_ground.size()+" Documents added to LSH");
+        System.out.println(isnew_ground.size()+" Documents added to UMass");
         
         new PRPlot(isnew_ground,nearestNeighbor);
     }

@@ -30,11 +30,15 @@ public class AnalyzeHMM {
         docs.loadDocTopics(ComputeEnvironment.getDataDirectory()+"/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         docs.setAnnotatedDocsOnly(true);
         Vocabulary v = new Vocabulary();
-        NonwordSplitParser p = new NonwordSplitParser();
+        FSDParser p = new NonwordSplitParser();
         Document doc;
         while((doc = docs.nextDoc())!=null){
             Featurizer.stringToInt(doc.getText(), p, v);
         }
+        //hmm.setVocab(v);
+        HMMFeaturizer feat = new HMMFeaturizer(hmm,v,p);
+        docs.reset();
+        feat.deriveAndAddFeatures(docs.nextDoc());
         System.out.println(hmm.printStatesCompact(v));
     }
 }

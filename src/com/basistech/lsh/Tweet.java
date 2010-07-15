@@ -12,6 +12,7 @@ public class Tweet implements Document, Comparable<Tweet> {
     private String user;
     private String dateTime;
     private int uid;
+    private int[] hash;
 
     //public Document(FeatureVector features) {
     //	super();
@@ -45,6 +46,17 @@ public class Tweet implements Document, Comparable<Tweet> {
     public int hashCode(){
         return uid;
     }
+
+    @Override
+    public int[] getHash() {
+        return hash;
+    }
+
+    @Override
+    public void setHash(int[] hash) {
+        this.hash=hash;
+    }
+
 
     public TThread getTThread() {
         return tthread.getRoot();

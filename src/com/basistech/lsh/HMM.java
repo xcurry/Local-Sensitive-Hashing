@@ -6,7 +6,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
 
-public class HMM implements Serializable{
+public class HMM implements Serializable, Cloneable{
+
+    final static long serialVersionUID= -7338175117504339955L;
 
     private static Random rng;
     static {
@@ -30,6 +32,24 @@ public class HMM implements Serializable{
         this.totalStates = nStates;
         this.totalObservations = nObservations;
         initStorage();
+    }
+    
+    private HMM(){}
+
+    @Override
+    public HMM clone(){
+        HMM clone = new HMM();
+        clone.totalStates=totalStates;
+        clone.totalObservations=totalObservations;
+        clone.states=states.clone();
+        clone.transitions=transitions.clone();
+        clone.alpha=alpha.clone();
+        clone.beta=beta.clone();
+        clone.colCount=colCount.clone();
+        clone.transCount=transCount.clone();
+        clone.obsCount=obsCount.clone();
+        clone.trainingIterations=trainingIterations;
+        return clone;
     }
 
     //@Override
@@ -202,7 +222,7 @@ public class HMM implements Serializable{
         for (int i = 0; i < totalStates; ++i) {
             b += beta[0][i] * alpha[0][i];
         }
-        System.err.println("a = " + a + ", b = " + b);
+        //System.err.println("a = " + a + ", b = " + b);
     }
 
     public void EStep(int[] obsSeq) {
@@ -241,6 +261,7 @@ public class HMM implements Serializable{
         for (int i = 0; i < totalStates; ++i) {
             double obsTotal = 0.0d;
             for (int sym = 0; sym < totalObservations; ++sym){
+                obsCount[i][sym]+=1;
                 obsTotal += obsCount[i][sym];
             }
             for (int sym = 0; sym < totalObservations; ++sym){
@@ -249,6 +270,7 @@ public class HMM implements Serializable{
 
             double transTotal = 0.0d;
             for (int j = 0; j < totalStates; ++j) {
+                transCount[i][j]+=1;
                 transTotal += transCount[i][j];
             }
             for (int j = 0; j < totalStates; ++j) {
@@ -351,19 +373,21 @@ public class HMM implements Serializable{
     
     public static void test() {
         int[] obsSeq2 = {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0};
-        int[] obsSeq1 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1};
-        HMM h = new HMM(3, 3); // 3 states, observables {0, 1, 2}
+        int[] obsSeq1 = {0, 0, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 3, 1};
+        HMM h = new HMM(1, 4); // 3 states, observables {0, 1, 2}
         System.out.println(h.toString());
         for (int i = 0; i < 200; ++i) {
-            h.EStep(obsSeq1);
-            h.checkFB(obsSeq1.length);
-            h.EStep(obsSeq2);
-            h.checkFB(obsSeq2.length);
+            for(int j=0; j<500; j++){
+                h.EStep(obsSeq1);
+                h.checkFB(obsSeq1.length);
+                h.EStep(obsSeq2);
+                h.checkFB(obsSeq2.length);
+            }
             h.MStep();    
             System.out.println("=== m-step ===");
             System.out.println(h.toString());
         }
-        int[] encodeSeq={0,1,1};
+        int[] encodeSeq={0,3,1};
         FeatureVector fv = h.getFeatures(encodeSeq);
         System.out.println(h);
         System.out.println(fv);
@@ -372,6 +396,9 @@ public class HMM implements Serializable{
     public static void main(String[] args) {
         test();
     }
+
+    //private Vocabulary v;
+    //public void setVocab(Vocabulary v){this.v=v;}
 
 
     public FeatureVector getFeatures(int[] doc){
@@ -387,12 +414,28 @@ public class HMM implements Serializable{
                     norm+=transProbs[i][j];
                 }
             }
+            //double stCodeLen=0;
+            //System.out.print(v.reverseLookup(doc[t])+" ");
+            //double expCodeLength=0;
+            //double norm2=0;
+            //for(int i = 0; i<totalStates; i++){
+            //    norm2+=alpha[t][i]*beta[t][i];
+            //}
+            //for(int s=0; s<totalStates; s++){
+            //    double prob=alpha[t][s]*beta[t][s]/norm2;
+            //    expCodeLength+=prob*-Math.log(states[s][doc[t]]*9999/(double)10000+
+            //                                  1/Math.pow(2, 32)*1/(double)10000)/log2;
+            //}
+            //System.out.println(expCodeLength);
             for(int i = 0; i<totalStates; i++){
                 for(int j = 0; j<totalStates; j++){
                     transExpVals[i][j]+=transProbs[i][j]/norm;
+            //        stCodeLen+=-transProbs[i][j]/norm*Math.log(transitions[i][j])/log2;
                 }
             }
+            //System.out.println(stCodeLen);
         }
+        //System.exit(0);
 
         FeatureVector featVec = new FeatureVector();
 

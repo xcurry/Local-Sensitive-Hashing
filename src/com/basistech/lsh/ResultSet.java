@@ -44,7 +44,7 @@ public class ResultSet <T> {
     public void add(T result, double score) {
         ResultPair<T> toadd = new ResultPair<T>(result, score);
         if(currentContents.containsKey(result)){
-            if(Double.valueOf(score).equals(currentContents.get(result))){
+            if(score<=currentContents.get(result).doubleValue()){
                 return;
             }else{
                 currentContents.remove(result);

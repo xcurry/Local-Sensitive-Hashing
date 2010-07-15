@@ -22,6 +22,11 @@ public class HMMFeaturizer extends Featurizer{
     }
 
     @Override
+    public Vocabulary getVocabulary() {
+        return vocab;
+    }
+
+    @Override
     public void deriveAndAddFeatures(Document doc){
         doc.setFeatures(getFeatures(doc.getText()));
     }
@@ -34,6 +39,12 @@ public class HMMFeaturizer extends Featurizer{
     @Override
     public FSDParser getParser() {
         return parser;
+    }
+
+    @Override
+    public HMMFeaturizer clone(){
+        HMM hmmClone = hmm.clone();
+        return new HMMFeaturizer(hmmClone,vocab,parser);
     }
 
 }

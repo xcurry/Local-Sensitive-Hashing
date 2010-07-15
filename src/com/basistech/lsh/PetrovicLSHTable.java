@@ -10,18 +10,20 @@ public class PetrovicLSHTable {
     private Document[] table;
     private int[] nextSlot;
     private int maxPerBucket;
+    private int hashIndex;
 
-    public PetrovicLSHTable(int dimension, int maxPerBucket, int projectionSeed) {
+    public PetrovicLSHTable(int dimension, int maxPerBucket, int hashIndex) {
         this.dimension = dimension;
         if(dimension>31){
         	throw new IllegalArgumentException("Dimensions greater than 31 not supported, dimension="+dimension);
         }
-        this.projections = createProjections(projectionSeed);
+        this.projections = createProjections(hashIndex);
         this.maxPerBucket=maxPerBucket;
         table = new Document[maxPerBucket*(int)Math.pow(2, dimension)];
         nextSlot = new int[(int)Math.pow(2, dimension)];
+        this.hashIndex=hashIndex;
     }
-    
+
     private List<HashingProjection> createProjections(int projectionSeed){
     	Sampler sampler = new GaussianSampler(projectionSeed);
         ArrayList<HashingProjection> projs = new ArrayList<HashingProjection>();
@@ -31,26 +33,33 @@ public class PetrovicLSHTable {
         return projs;
     }
 
-    private int computeSignature(FeatureVector featVec) {
-        int signature = 0;
-        int i = 0;
-        for (HashingProjection p : projections) {
-            signature = signature + ((p.bitValue(featVec)?1:0)<<i);
-            ++i;
-        }
-        return signature;		
+    private int getSignature(Document d) {
+        int[] hash = d.getHash();
+        return hash[hashIndex];
     }
-    
+
+    public void deriveAndAddHash(Document d){
+        int signature = 0;
+        //d.getFeatures().print();
+        for (int i = 0; i<projections.size(); i++) {
+            HashingProjection p = projections.get(i);
+            boolean bv = p.bitValue(d.getFeatures());
+            int toadd=((bv?1:0)<<i);
+            signature = signature + toadd;
+        }
+        int[] hash = d.getHash();
+        hash[hashIndex] = signature;
+    }
+
     public void add(Document doc){
-    	FeatureVector features=doc.getFeatures();
-    	int bucket=computeSignature(features);
+    	int bucket=getSignature(doc);
     	int insertloc=bucket*maxPerBucket+nextSlot[bucket];
     	table[insertloc]=doc;
     	nextSlot[bucket]=(nextSlot[bucket]+1)%maxPerBucket;
     }
 
-    public void search(HashMap<Document, Integer> results, FeatureVector featVec) {
-    	int bucket = computeSignature(featVec);
+    public void search(HashMap<Document, Integer> results, Document toSearch) {
+    	int bucket = getSignature(toSearch);
     	int start=bucket*maxPerBucket;
     	int end=bucket*(maxPerBucket+1)-1;
     	for(int i=start; i<end && i<table.length && table[i]!=null; i++){
@@ -61,6 +70,6 @@ public class PetrovicLSHTable {
     		}else{
     			results.put(doc, val+1);
     		}
-    	}		
-    }	
+    	}
+    }
 }

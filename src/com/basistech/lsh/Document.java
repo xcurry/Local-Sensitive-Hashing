@@ -11,4 +11,6 @@ public interface Document {
     public FeatureVector getFeatures();
     public void setFeatures(FeatureVector fv);
     public List<String> getAnnotations();
+    public int[] getHash();
+    public void setHash(int[] hash);
 }

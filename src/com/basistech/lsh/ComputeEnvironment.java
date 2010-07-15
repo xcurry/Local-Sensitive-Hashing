@@ -52,7 +52,7 @@ public class ComputeEnvironment {
 
     //the limit for the local environment.  On the cluster, the cap gets removed
     //via Main MethodSwitch
-    private static Integer bucketSizeCap = 10;
+    private static Integer bucketSizeCap = 20;
     public static void removeBucketSizeCap(){
         bucketSizeCap = null;
     }

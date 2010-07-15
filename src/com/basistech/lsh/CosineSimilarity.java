@@ -21,4 +21,12 @@ public class CosineSimilarity {
         //return Math.log(Math.abs(dot)) - Math.log(norm1) - Math.log(norm2);
     }   
 
+    public static void main(String[] args){
+        FeatureVector fv1 = new FeatureVector();
+        FeatureVector fv2 = new FeatureVector();
+        fv1.put(1, 1.0);
+        fv2.put(1, 1.0);
+        fv2.put(2, 1.0);
+        System.out.println(CosineSimilarity.value(fv1,fv2));
+    }
 }

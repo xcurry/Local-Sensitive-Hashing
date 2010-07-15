@@ -128,6 +128,7 @@ public class TDT5DocStore implements DocStore{
         nextToParse=0;
         currDoc=-1;
         currFileDocs = null;
+        nextUid=0;
     }
 
     public int getDocCount(){
