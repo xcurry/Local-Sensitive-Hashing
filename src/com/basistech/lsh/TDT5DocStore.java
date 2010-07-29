@@ -28,6 +28,7 @@ public class TDT5DocStore implements DocStore{
     private HashMap<String,List<String>> docTopics = new HashMap<String,List<String>>();
     int nextUid=0;
     boolean annotatedDocsOnly;
+    boolean unAnnotatedDocsOnly;
 
     @Override
     public TDT5DocStore clone(){
@@ -41,6 +42,7 @@ public class TDT5DocStore implements DocStore{
         newStore.docTopics = new HashMap<String,List<String>>();
         newStore.nextUid=nextUid;
         newStore.annotatedDocsOnly=annotatedDocsOnly;
+        newStore.unAnnotatedDocsOnly=unAnnotatedDocsOnly;
         for(String s: docTopics.keySet()){
             newStore.docTopics.put(s, new ArrayList<String>(docTopics.get(s)));
         }
@@ -121,6 +123,18 @@ public class TDT5DocStore implements DocStore{
 
     public void setAnnotatedDocsOnly(boolean annotatedDocsOnly) {
         this.annotatedDocsOnly = annotatedDocsOnly;
+        if(annotatedDocsOnly){
+            unAnnotatedDocsOnly=false;
+        }
+        hasCount=false;
+    }
+
+    public void setUnAnnotatedDocsOnly(boolean unAnnotatedDocsOnly) {
+        this.unAnnotatedDocsOnly = unAnnotatedDocsOnly;
+        if(unAnnotatedDocsOnly){
+            annotatedDocsOnly=false;
+        }
+        hasCount=false;
     }
 
     @Override
@@ -201,6 +215,11 @@ public class TDT5DocStore implements DocStore{
         return docCount;
     }
 
+    public void setDocCount(int docCount){
+        hasCount=true;
+        this.docCount=docCount;
+    }
+
     @Override
     public Document nextDoc(){
         String text = null;
@@ -244,6 +263,10 @@ public class TDT5DocStore implements DocStore{
                 return nextDoc();
             }else{
                 topics = new ArrayList<String>();
+            }
+        }else{
+            if(unAnnotatedDocsOnly){
+                return nextDoc();
             }
         }
         theReturn.setAnnotations(topics);

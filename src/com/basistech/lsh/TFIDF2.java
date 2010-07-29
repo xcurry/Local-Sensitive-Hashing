@@ -77,7 +77,6 @@ public class TFIDF2 extends Featurizer{
     }
 
     private TFPair computeTermFrequency(String str){
-        //TODO: add lexer interface & whitespace lexer
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 
         int totalCount = 0;
         String[] toks = parser.parse(str);

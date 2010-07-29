@@ -10,8 +10,6 @@ import java.util.Map.Entry;
 
 //most of this class is probably broken--computeFeatures 
 //and computeTermFrequency work, though
-//TODO: make feature extractor interface
-//TODO: add lexer interface & whitespace lexer
 @Deprecated
 public class TFIDF {
     private HashMap<Integer, Integer> df;
@@ -33,7 +31,6 @@ public class TFIDF {
     }
 
     public TFPair computeTermFrequency(Reader f) throws IOException {
-        //TODO: add lexer interface & whitespace lexer
         BufferedReader in = new BufferedReader(f);
         String line = null;
         HashMap<String, Integer> tf = new HashMap<String, Integer>(); 

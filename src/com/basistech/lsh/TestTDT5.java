@@ -15,6 +15,8 @@ public class TestTDT5 {
      */
     public static void main(String[] args) {
         System.out.println("TestTDT5, compiled on: "+ComputeEnvironment.getCompilationDate());
+
+        long start = System.currentTimeMillis();
         
         TDT5DocStore docs = new TDT5DocStore();
         FilenameFilter english = new FilenameFilter(){
@@ -30,31 +32,34 @@ public class TestTDT5 {
         //docs.enqueueDir("/basis/users/cdoersch/data/tdt5/data/tkn_sgm",english);
         //docs.enqueueDir("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\data\\mttkn_sgm",english);
         docs.loadDocTopics(ComputeEnvironment.getDataDirectory()+"/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
-        docs.setAnnotatedDocsOnly(true);
+        //docs.setUnAnnotatedDocsOnly(true);
+        docs.setUnAnnotatedDocsOnly(true);
+        //docs.setDocCount(6366);//TDT5 annotated set
         //docs.loadDocTopics("/home/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.topic_rel.v2.0");
-        int nDocs = 6366;//docs.getDocCount();
+        int nDocs = docs.getDocCount();
         System.out.println("Found "+nDocs+" documents");
         //docs.loadDocTopics("C:\\cygwin\\home\\cdoersch\\data\\tdt5\\LDC2006T19\\tdt5_topic_annot\\data\\annotations\\topic_relevance\\TDT2004.off_topic.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.topic_rel.v2.0");
         //docs.loadDocTopics("/basis/users/cdoersch/data/tdt5/LDC2006T19/tdt5_topic_annot/data/annotations/topic_relevance/TDT2004.off_topic.v2.0");
 
-        //HMMTrainer trainer;
-        //if(ComputeEnvironment.isCluster()){
-        //    trainer = new HMMTrainer(24);
-        //}else{
-        //    trainer = new HMMTrainer(1);
-        //}
-        //trainer.useCorpus(docs);
-        //HMMFeaturizer hmm = trainer.getTrainedHMM(40);
-        //Featurizer feats = hmm;
-        TFIDF2 tfidf = new TFIDF2();
-        tfidf.setGiveProportions(true);
-        tfidf.setUseIDF(true);
-        tfidf.trainIDF(docs);
-        Featurizer feats = tfidf;
+        HMMTrainer trainer;
+        if(ComputeEnvironment.isCluster()){
+            trainer = new HMMTrainer(48);
+        }else{
+            trainer = new HMMTrainer(1);
+        }
+        trainer.useCorpus(docs);
+        HMMFeaturizer hmm = trainer.getTrainedHMM(80);
+        Featurizer feats = hmm;
+        //TFIDF2 tfidf = new TFIDF2();
+        //tfidf.setGiveProportions(true);
+        //tfidf.setUseIDF(true);
+        //tfidf.trainIDF(docs);
+        //Featurizer feats = tfidf;
         
         docs.reset();
+        docs.setAnnotatedDocsOnly(true);
         
         ArrayList<Boolean> isnew_ground = new ArrayList<Boolean>();
         HashSet<String> labelset = new HashSet<String>();
@@ -74,10 +79,10 @@ public class TestTDT5 {
                       (Math.log(1-Math.pow(pColl,(double)dimension)))
             );
         System.out.println(nTables);
-        PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,0);
+        PetrovicLSH lsh = new PetrovicLSH(dimension, maxPerBucket, nTables,1000);
         //to run the experiment with 7 dimensions, replace the above line with this one:
         //PetrovicLSH lsh = new PetrovicLSH(7, maxPerBucket, nTables,0);
-        ParallelDocumentAnalyzer pda = new ParallelDocumentAnalyzer(lsh, feats, docs, 5);
+        ParallelDocumentAnalyzer pda = new ParallelDocumentAnalyzer(lsh, feats, docs, 6);
         
         File f = new File(ComputeEnvironment.getVarDirectory(),"distances.log");
         try{
@@ -85,10 +90,13 @@ public class TestTDT5 {
             Document currDoc;
             int i = 0;
             while((currDoc=pda.nextDoc())!=null){
-                if(i%1000==0){
+                if(i%10==0){
                     System.out.println("Processing document "+i);
                     System.out.flush();
                 }
+                //if(i==1000){
+                //    double[] a = new double[2000000000];
+                //}
                 //if you disable the document analyzer, you need to un-comment this line.
                 //feats.deriveAndAddFeatures(currDoc);
                 ResultSet<Document> res = lsh.search(currDoc, 1);
@@ -121,6 +129,11 @@ public class TestTDT5 {
         
         PRPlot.writeChart(isnew_ground,nearestNeighbor,
                 new File(ComputeEnvironment.getVarDirectory(),"perf_chart.png").getAbsolutePath());
+
+        long end = System.currentTimeMillis();
+
+        long diff = end-start;
+        System.out.println("time: " + diff/3600000+ "h "+(diff%3600000)/60000 + "m "+(diff%60000)/1000 +"s");
 
         System.exit(0);
     }

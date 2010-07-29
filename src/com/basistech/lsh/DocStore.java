@@ -9,6 +9,8 @@ package com.basistech.lsh;
  *
  * @author cdoersch
  */
+//TODO: this interface should extend the Iterable<Document> interface, since
+//a single DocStore is often used multiple times by multiple modules.
 public interface DocStore {
     public Document nextDoc();
     public int getDocCount();

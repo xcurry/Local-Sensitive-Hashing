@@ -61,15 +61,17 @@ public class ParallelDocumentAnalyzer {
             Document doc;
             while((doc=docs.nextDoc())!=null){
                 DocPallet pal = new DocPallet(doc);
-                in.put(pal);
                 //note: it can't be the worker threads putting the finished docs
                 //into out because the worker threads might reorder them.
                 out.put(pal);
+                //System.out.println("outsize,docReader:"+out.size());
+                in.put(pal);
+                //System.out.println("insize,docReader:"+in.size());
             }
             for(int i = 0; i<processorThreads; i++){
                 DocPallet pal = new DocPallet(nullDoc);
-                in.put(pal);
                 out.put(pal);
+                in.put(pal);
             }
         }catch(Exception e){throw new RuntimeException(e);}}
     }
@@ -83,6 +85,7 @@ public class ParallelDocumentAnalyzer {
         public void run() {try{
             DocPallet docp;
             while((docp=in.take()).doc!=nullDoc){
+                //System.out.println("insize, docProcessor:"+in.size());
                 localFeat.deriveAndAddFeatures(docp.doc);
                 lsh.deriveAndAddHash(docp.doc);
                 docp.doc.getFeatures().getNorm();
@@ -102,6 +105,7 @@ public class ParallelDocumentAnalyzer {
                 return null;
             }
         }
+        //System.out.println("outsize, nextDoc:"+out.size());
         docp.done.acquire();
         return docp.doc;
     }catch(InterruptedException e){throw new RuntimeException(e);}}

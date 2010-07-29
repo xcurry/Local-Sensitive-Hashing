@@ -11,6 +11,8 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintStream;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 /**
  *
@@ -25,6 +27,13 @@ public class HMMTrainer {
     private Vocabulary vocab = new Vocabulary();
     private FSDParser parser = new CommonWordRemovalParser();
     private File currHMMFile = null;
+    private final IntCounter<Integer> counts = new IntCounter<Integer>();
+    private Comparator countCompare = new Comparator<Integer>(){
+        public int compare(Integer o1, Integer o2){
+            return counts.getInt(o2)-counts.getInt(o1);
+        }
+    };
+    private PriorityQueue<Integer> mostFrequentWords = new PriorityQueue<Integer>(11,countCompare);
 
     private HMM currHMM;
 
@@ -45,7 +54,8 @@ public class HMMTrainer {
             loadHMM();
         }
         if(!hasParceledDocuments){
-            parcelDocuments();
+            parcelDocuments();//even if we're not doing training, we still need
+                              //to initialize the vocabulary.
         }
         if(currHMM==null){
             initializeHMM();
@@ -73,6 +83,7 @@ public class HMMTrainer {
 
     private void initializeHMM(){
         currHMM = new HMM(100,vocab.size());
+        currHMM.bumpStates(mostFrequentWords);
     }
 
     private void parcelDocuments(){try{
@@ -93,11 +104,17 @@ public class HMMTrainer {
                 oos=new ObjectOutputStream(new FileOutputStream(newFile));
             }
             int[] docRep = Featurizer.stringToInt(doc.getText(), parser, vocab);
+            for(int j=0; j<docRep.length; j++){
+                this.counts.increment(IntegerCache.get(docRep[j]));
+            }
             oos.writeObject(docRep);
             idx++;
         }
         oos.flush();
         oos.close();
+        for(Integer i: counts.keySet()){
+            mostFrequentWords.offer(i);
+        }
         System.out.println("HMMTrainer: idx="+idx);
         hasParceledDocuments=true;
     }catch(Exception e){throw new RuntimeException(e);}}
@@ -144,6 +161,7 @@ public class HMMTrainer {
             currHMM.mergeAccumulators(other);
         }
         currHMM.MStep();
+        //currHMM.reInitDeadStates(mostFrequentWords);
 
         if(saveDir!=null){
             saveHMM();

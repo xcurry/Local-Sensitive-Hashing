@@ -11,6 +11,7 @@ public class Vocabulary {
     private Lock lock;
     private int id = 0;
     public static int UNDEF = -1;
+    private ThreadLocal<HashMap<Integer,String>> reverseTableStore = new ThreadLocal<HashMap<Integer,String>>();
 
     public Vocabulary() {
         table = new HashMap<String, Integer>();        
@@ -76,22 +77,29 @@ public class Vocabulary {
         return table.toString();        
     }
 
+    /**
+     * Warning: for debugging purposes only.  Internally, this method creates
+     * a reverse lookup table--the table won't reflect subsequent puts.
+     * @param i
+     * @return
+     */
     public String reverseLookup(int i){
-        for(String s: table.keySet()){
-            if(table.get(s).intValue()==i){
-                return s;
+        HashMap<Integer,String> reverseTable = reverseTableStore.get();
+        if(reverseTable==null){
+            reverseTable=new HashMap<Integer,String>();
+            for(String s: table.keySet()){
+                reverseTable.put(table.get(s),s);
             }
-        }
-        if(syncTable!=null){
-            try{
-                lock.lock();
-                for(String s: syncTable.keySet()){
-                    if(syncTable.get(s).intValue()==i){
-                        return s;
+            if(syncTable!=null){
+                try{
+                    lock.lock();
+                    for(String s: syncTable.keySet()){
+                        reverseTable.put(table.get(s),s);
                     }
-                }
-            }finally{lock.unlock();}
+                }finally{lock.unlock();}
+            }
+            reverseTableStore.set(reverseTable);
         }
-        return null;
+        return reverseTable.get(i);
     }
 }
