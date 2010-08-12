@@ -6,5 +6,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/jfreechart-1.0.13-swt.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jfreechart-1.0.13.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/swtgraphics2d.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math-2.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
