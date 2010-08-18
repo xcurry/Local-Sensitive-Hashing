@@ -17,7 +17,7 @@ public class HMM implements Serializable, Cloneable{
     }
     private int totalStates;
     private int totalObservations;
-    private double[][] states;
+    private double[][] observations;
     private double[][] transitions;
     private double[][] alpha;
     private double[][] beta;
@@ -44,7 +44,7 @@ public class HMM implements Serializable, Cloneable{
         HMM clone = new HMM();
         clone.totalStates=totalStates;
         clone.totalObservations=totalObservations;
-        clone.states=deepClone(states);
+        clone.observations=deepClone(observations);
         clone.transitions=deepClone(transitions);
         clone.alpha=deepClone(alpha);
         clone.beta=deepClone(beta);
@@ -64,66 +64,30 @@ public class HMM implements Serializable, Cloneable{
         return clone;
     }
 
-
-    //@Override
-    //public FSDParser getParser() {
-    //    return parser;
-    //}
-
-    //public HMM(int nStates, List<String> docStrs, FSDParser parser){
-    //    this.totalStates = nStates;
-    //    this.parser=parser;
-    //    saveDocuments(docStrs);
-    //    this.totalObservations=vocab.size();
-    //    initStorage();
-    //    train(20);
-    //}
-    //  // create HMM with 128 states, obs alphabet all unique words
-    //  // parsed by parser
-    // HMM h = new HMM(128, docStrings, parser);
-    //  // do 5 rounds of EM on the corpus
-    // h.train(5); 
-    //public void train(int nIters) {
-    //    for (int it = 0; it < nIters; ++it) {
-    //        int idx=0;
-    //        for (int[] doc:docs) {
-    //            if(idx%500==0){
-    //                System.out.println("Estep " + it + " doc number "+idx);
-    //                System.out.flush();
-    //            }
-    //            EStep(doc);
-    //            idx++;
-    //        }
-    //        System.out.println("Mstep "+it);
-    //        MStep();
-    //        trainingIterations++;
-    //    }
-    //}
-
     public int getTrainingIterations() {
         return trainingIterations;
     }
 
     private void initStorage() {
-        initializeStates();
+        initializeObservations();
         initializeTransitions();
         extendTrellis(5);
         initializeAccumulators();
     }
 
-    private void initializeStates() {
-        states = new double[totalStates][totalObservations];
+    private void initializeObservations() {
+        observations = new double[totalStates][totalObservations];
         prior=new double[totalStates];
         for (int i = 0; i < totalStates; ++i) {
             double total = 0.0d;
             prior[i]=1.0d/totalStates;
             for (int j = 0; j < totalObservations; ++j) {
                 int v = Math.abs(rng.nextInt() % 4) + 1;
-                states[i][j] = v;
+                observations[i][j] = v;
                 total += v;
             }
             for (int j = 0; j < totalObservations; ++j) {
-                states[i][j] /= total;
+                observations[i][j] /= total;
             }
         }
     }
@@ -142,36 +106,20 @@ public class HMM implements Serializable, Cloneable{
             }
         }
     }
-
+    
+    // attempt to do clever initialization
     public void bumpStates(Queue<Integer> wordsToBump){
         for(int i = 0; i<totalStates; i++){
             bumpState(i, wordsToBump.poll());
         }
     }
 
+    // give word half the probability of emission from state
     private void bumpState(int state, int word){
         for(int j = 0; j<totalObservations; j++){
-            states[state][j]/=.5;
+            observations[state][j]/=.5;
         }
-        states[state][word]+=.5;
-    }
-
-    public void reInitDeadStates(Queue<Integer> wordsToBump){
-        double[] pop = getStatePopularity();
-        for(int i = 0; i<totalStates; i++){
-            if(pop[i]+prior[i]<.00001){
-                System.out.println("Re-initializing state "+i);
-                bumpState(i,wordsToBump.poll());
-                for(int j=0; j<totalStates; j++){
-                    for(int k = 0; k<totalStates; k++){
-                        transitions[j][k]*=.99;
-                        if(k==i){
-                            transitions[j][k]+=.01;
-                        }
-                    }
-                }
-            }
-        }
+        observations[state][word]+=.5;
     }
 
     private void extendTrellis(int length) {
@@ -206,7 +154,7 @@ public class HMM implements Serializable, Cloneable{
         double alphaNorm=0;
         for (int i = 0; i < totalStates; ++i) {
             //if the symbol wasn't in the training corpus, then assume uniform probability
-            alpha[time][i] = (sym<states[0].length?states[i][sym]:1)*prior[i];
+            alpha[time][i] = (sym<observations[0].length?observations[i][sym]:1)*prior[i];
             alphaNorm+=alpha[time][i];
         }
         for (int i = 0; i < totalStates; ++i) {
@@ -222,13 +170,14 @@ public class HMM implements Serializable, Cloneable{
                     alphaAcc += alpha[time - 1][i] * transitions[i][j];
                 }
                 try{
-                    alpha[time][j] = alphaAcc * (sym<states[0].length?states[j][sym]:1);
+                    alpha[time][j] = alphaAcc * (sym<observations[0].length?observations[j][sym]:1);
                 }catch(ArrayIndexOutOfBoundsException e){
-                    System.out.println("alpha:"+alpha.length+","+alpha[0].length+" time:"+time+" j:"+j+" states:"+states.length+","+states[0].length+" sym:"+sym);
+                    System.out.println("alpha:"+alpha.length+","+alpha[0].length+" time:"+time+" j:"+j+" states:"+observations.length+","+observations[0].length+" sym:"+sym);
                     throw e;
                 }
                 alphaNorm+=alpha[time][j];
             }
+            // normalize to avoid underflow
             for (int j = 0; j < totalStates; ++j) {
                 alpha[time][j]/=alphaNorm;
             }
@@ -250,17 +199,19 @@ public class HMM implements Serializable, Cloneable{
                 for (int j = 0; j < totalStates; ++j) {
                     int sym=obsSeq[time+1];
                     //if the symbol wasn't in the training corpus, then assume uniform probability
-                    betaAcc += beta[time + 1][j] * (sym<states.length?states[j][sym]:1) * transitions[i][j];
+                    betaAcc += beta[time + 1][j] * (sym<observations.length?observations[j][sym]:1) * transitions[i][j];
                 }
                 beta[time][i] = betaAcc;
                 betaNorm+=beta[time][i];
             }
+            // normalize to avoid underflow
             for (int i = 0; i < totalStates; ++i) {
                 beta[time][i]/=betaNorm;
             }
         }
     }
 
+    // for debugging, normalization of columns to avoid underflow invalidates
     private void checkFB(int length) {
         double a = 0.0d;
         length--;
@@ -288,7 +239,7 @@ public class HMM implements Serializable, Cloneable{
             for (int i = 0; i < totalStates; ++i) {
                 double curAlpha = alpha[time][i];
                 for (int j = 0; j < totalStates; ++j) {
-                    double v = curAlpha * beta[time + 1][j] * transitions[i][j] * states[j][sym];
+                    double v = curAlpha * beta[time + 1][j] * transitions[i][j] * observations[j][sym];
                     colCount[i][j] = v;
                     colTotal += v;
                 }
@@ -325,7 +276,7 @@ public class HMM implements Serializable, Cloneable{
                 obsTotal += obsCount[i][sym];
             }
             for (int sym = 0; sym < totalObservations; ++sym){
-                states[i][sym] = obsCount[i][sym] / obsTotal;
+                observations[i][sym] = obsCount[i][sym] / obsTotal;
             }
 
             double transTotal = 0.0d;
@@ -418,7 +369,7 @@ public class HMM implements Serializable, Cloneable{
         for (int i = 0; i < totalStates; ++i) {
             s += i + ": ";
             for (int sym = 0; sym < totalObservations; ++sym) {
-                s += String.format( "%d %.4f, ", sym, states[i][sym]);
+                s += String.format( "%d %.4f, ", sym, observations[i][sym]);
             }
             s += "\n";
         }
@@ -443,7 +394,6 @@ public class HMM implements Serializable, Cloneable{
             public int key;
             public Double prob;
 
-            @Override
             public int compareTo(keyProbPair o) {
                 return -prob.compareTo(o.prob);
             }
@@ -455,7 +405,7 @@ public class HMM implements Serializable, Cloneable{
             for(int sym = 0; sym<totalObservations; sym++){
                 keyProbPair kpp = new keyProbPair();
                 kpp.key=sym;
-                kpp.prob=states[i][sym];
+                kpp.prob=observations[i][sym];
                 keys.add(kpp);
             }
             Collections.sort(keys);
@@ -510,7 +460,9 @@ public class HMM implements Serializable, Cloneable{
             for(int i = 0; i<totalStates; i++){
                 for(int j = 0; j<totalStates; j++){
                     int sym = doc[t+1];
-                    transProbs[i][j]=alpha[t][i]*transitions[i][j]*(sym<states[0].length?states[j][sym]:1)*beta[t+1][j];
+                    transProbs[i][j]=alpha[t][i]*transitions[i][j]*
+                    (sym<observations[0].length?observations[j][sym]:1)*
+                    beta[t+1][j];
                     norm+=transProbs[i][j];
                 }
             }
@@ -539,10 +491,11 @@ public class HMM implements Serializable, Cloneable{
 
         FeatureVector featVec = new FeatureVector();
 
+        // feature set 1: for each transition in model, expected code length (entropy) for this doc
         int transid=0;
         for(int i = 0; i<totalStates; i++){
             for(int j = 0; j<totalStates; j++){
-                transid--;
+                transid--; //perhaps negative vals in IntegerCache are for set 1?
                 double val = -transExpVals[i][j]*Math.log(transitions[i][j])/log2;
                 if(!Double.isNaN(val)){
                     featVec.put(IntegerCache.get(transid),val);
@@ -551,6 +504,7 @@ public class HMM implements Serializable, Cloneable{
             }
         }
 
+        // feature set 2: for each word in doc, total code length (entropy)
         for(int t = 0; t<doc.length; t++){
             double norm=0;
             for(int i = 0; i<totalStates; i++){
@@ -559,7 +513,7 @@ public class HMM implements Serializable, Cloneable{
             double expCodeLength=0;
             for(int s=0; s<totalStates; s++){
                 double prob=alpha[t][s]*beta[t][s]/norm;
-                double emissProb = (doc[t]<states[0].length?states[s][doc[t]]:1);
+                double emissProb = (doc[t]<observations[0].length?observations[s][doc[t]]:1);
                 expCodeLength+=prob*-Math.log(emissProb*9999/(double)10000+
                                               1/Math.pow(2, 32)*1/(double)10000)/log2;
             }

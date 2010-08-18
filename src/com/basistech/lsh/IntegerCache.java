@@ -9,6 +9,7 @@ package com.basistech.lsh;
  *
  * @author cdoersch
  */
+// is this just an array with positive and negative indexes?
 public class IntegerCache {
     private static Integer[] positives;
     private static Integer[] negatives;

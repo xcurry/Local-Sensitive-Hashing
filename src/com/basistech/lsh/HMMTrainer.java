@@ -86,6 +86,7 @@ public class HMMTrainer {
         currHMM.bumpStates(mostFrequentWords);
     }
 
+    // for parallelization of E step of EM
     private void parcelDocuments(){try{
         Document doc;
         int nDocs=docs.getDocCount();
@@ -128,6 +129,7 @@ public class HMMTrainer {
         for(int parcel=0; parcel<numThreads-1; parcel++){
             File scriptFile=File.createTempFile("worker_thread", ".sh");
             PrintStream script = new PrintStream(scriptFile);
+            // write a script file for sge 
             script.println("#!/bin/bash");
             script.println("#$ -l mem=4G");
             script.println(ComputeEnvironment.getJavaHome()+"/bin/java -jar "+
@@ -139,6 +141,7 @@ public class HMMTrainer {
                     "\""+saveDir.getAbsolutePath()+"\"");
             script.close();
             System.out.println("/opt/sge/bin/lx24-amd64/qsub "+scriptFile.getAbsolutePath());
+            // sumbit this job to the queue run e.g., from cn0
             Runtime.getRuntime().exec("/opt/sge/bin/lx24-amd64/qsub "+scriptFile.getAbsolutePath());
         }
         //TODO: it should be possible to pass the needed information directly,
@@ -151,6 +154,7 @@ public class HMMTrainer {
             saveDir.getAbsolutePath()
         });
         currHMM.resetAccumulators();
+        // poll until the E step finishes; using presence of file
         for(int parcel=0; parcel<numThreads; parcel++){
             File dest_file = new File(saveDir,"estep_"+parcel+"_final");
             while(!dest_file.exists()){
@@ -161,8 +165,7 @@ public class HMMTrainer {
             currHMM.mergeAccumulators(other);
         }
         currHMM.MStep();
-        //currHMM.reInitDeadStates(mostFrequentWords);
-
+        
         if(saveDir!=null){
             saveHMM();
         }

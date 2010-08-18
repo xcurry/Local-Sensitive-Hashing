@@ -3,14 +3,14 @@ package com.basistech.lsh;
 import java.util.Random;
 
 public class HashingProjection {
-    private double[] rep;
+    private double[] poolOfSamples;
     private int modSize;
 
     public HashingProjection(Sampler sampler) {
         modSize=1024+sampler.getRandom().nextInt(1023);
-        rep = new double[modSize];
+        poolOfSamples = new double[modSize];
         for(int i=0; i<modSize; i++){
-            rep[i]=sampler.draw();
+            poolOfSamples[i]=sampler.draw();
         }
     }
 
@@ -18,11 +18,11 @@ public class HashingProjection {
         double dotProduct = 0.0d;
         for (int featId : featVec.keySet()) {
             double featValue = featVec.get(featId);
-            featId=featId%modSize;
+            featId=featId%modSize; // hash feature into poolOfSamples
             if(featId<0){
                 featId+=modSize;
             }
-            Double coef=rep[featId];
+            Double coef=poolOfSamples[featId];
             dotProduct += featValue * coef;			
         }		
         return dotProduct > 0.0d;
@@ -30,8 +30,8 @@ public class HashingProjection {
 
     public String toString() {
         StringBuilder str = new StringBuilder();
-        for (int i = 0; i<rep.length; i++) {
-            str.append(i + ":" + rep[i] + ";");
+        for (int i = 0; i<poolOfSamples.length; i++) {
+            str.append(i + ":" + poolOfSamples[i] + ";");
         }
         return str.toString();
     }
