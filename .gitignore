@@ -1,0 +1,6 @@
+bin/
+build/
+copyrightText.txt
+dist/
+oldcr.txt
+src/com/basistech/lsh/version.properties
